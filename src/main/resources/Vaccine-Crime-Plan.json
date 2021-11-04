@@ -1,0 +1,270 @@
+{
+  "name": "Vaccine Crime Query",
+  "id": 123,
+  "continuous": "false",
+  "iterations": "1",
+  "subplans": [
+    {
+      "id": 0,
+      "location": "Berlin",
+      "execution-engine": "Hyper",
+      "executor-actorRef": "akka://sys@hostA:2552/user/executor",
+      "queryType": "relationalAlgebra",
+      "query": [
+        {
+          "id": 0,
+          "type": "join",
+          "rowcount": 16,
+          "cumulative-cost": "20000",
+          "ordering": ["asc"],
+          "orderIndices": [0],
+          "inColumnTypes": [
+            ["VARCHAR", "NUMERIC"],
+            ["VARCHAR","NUMERIC", "NUMERIC"]],
+          "input": [1, 3],
+          "jointype": "INNER",
+          "conditions": [
+            {
+              "operator": "EQUALS",
+              "leftOrdinal": 0,
+              "rightOrdinal": 0
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "type": "project",
+          "rowcount": 16,
+          "cumulative-cost": "50",
+          "ordering": ["asc"],
+          "orderIndices": [0],
+          "inColumnTypes": ["VARCHAR", "NUMERIC", "NUMERIC", "NUMERIC", "NUMERIC", "NUMERIC"],
+          "input": [2],
+          "fieldOrdinals": [0, 5]
+        },
+        {
+          "id": 2,
+          "type": "tablescan",
+          "rowcount": 16,
+          "cumulative-cost": "30",
+          "ordering": ["asc"],
+          "orderIndices": [0],
+          "inColumnTypes": ["VARCHAR", "NUMERIC", "NUMERIC", "NUMERIC", "NUMERIC", "NUMERIC"],
+          "input": [],
+          "tableName": "health"
+        }, 
+        {
+          "id": 3,
+          "type": "tablescan",
+          "rowcount": 16,
+          "cumulative-cost": "30",
+          "ordering": [],
+          "orderIndices": [],
+          "inColumnTypes": [
+            "VARCHAR", 
+            "NUMERIC",
+            "NUMERIC"
+            ],
+          "input": [],
+          "tableName": "TempExternalInput0"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "location": "Frankfurt",
+      "execution-engine": "Postgres",
+      "executor-actorRef": "akka://sysB@hostB:2552/user/executor",
+      "queryType": "relationalAlgebra",
+      "query": [
+        {
+          "id": 0,
+          "type": "aggregate",
+          "inRowcount": 50000,
+          "cumulative-cost": 18500,
+          "ordering": [],
+          "orderIndices": [],
+          "inColumnTypes": [
+            "VARCHAR",
+            "NUMERIC"
+            ],
+          "input": [1],
+          "GroupingIndices": [0],
+          "aggCalls": [
+            {
+              "type": "Count",
+              "indices": [1],
+              "distinct": "false",
+              "predicate": {
+                "operator": "EQUALS",
+                "operands": [
+                  {
+                    "type": "field",
+                    "fieldOrdinal": 1
+                  },{
+                    "type": "literal",
+                    "dataType": "Int",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Count",
+              "indices": []
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "type": "project",
+          "rowcount": 50000,
+          "cumulative-cost": 3000,
+          "ordering": ["asc"],
+          "orderIndices": [0],
+          "inColumnTypes": ["VARCHAR", "NUMERIC", "NUMERIC"],
+          "input": [2],
+          "fieldOrdinals": [0, 2]
+        },
+        {
+          "id": 2,
+          "type": "join",
+          "rowcount": 50000,
+          "cumulative-cost": "10000",
+          "ordering": [],
+          "orderIndices": [],
+          "inColumnTypes": [
+            ["VARCHAR", "NUMERIC"],
+            ["NUMERIC", "NUMERIC"]
+          ],
+          "input": [3, 6],
+          "jointype": "INNER",
+          "conditions": [
+            {
+              "operator": "EQUALS",
+              "leftOrdinal": 0,
+              "rightOrdinal": 0
+            }
+          ]
+        }, 
+        {
+          "id": 3,
+          "type": "project",
+          "rowcount": 50000,
+          "cumulative-cost": 3000,
+          "ordering": ["asc"],
+          "orderIndices": [0],
+          "inColumnTypes": ["NUMERIC", "VARCHAR", "VARCHAR", "DATE", "NUMERIC", "NUMERIC", "VARCHAR"],
+          "input": [4],
+          "fieldOrdinals": [1, 4]
+        },
+        {
+          "id": 4,
+          "type": "filter",
+          "rowcount": 50000,
+          "cumulative-cost": 2000,
+          "ordering": "asc",
+          "orderIndices": [0],
+          "inColumnTypes": ["NUMERIC", "VARCHAR", "VARCHAR", "DATE", "NUMERIC", "NUMERIC", "VARCHAR"],
+          "input": [5],
+          "predicates": [
+            {
+              "operator": "GREATER_THAN",
+              "operands": [{
+                "type": "field",
+                "fieldOrdinal": 3
+              },{
+                "type": "literal",
+                "dataType": "String",
+                "value": "2021-07-00"
+              }]
+            },
+            {
+              "operator": "EQUALS",
+              "operands": [{
+                "type": "field",
+                "fieldOrdinal": 2
+              },{
+                "type": "literal",
+                "dataType": "String",
+                "value": "bodily_harm"
+              }]
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "tablescan",
+          "rowcount": 250000,
+          "cumulative-cost": 1500,
+          "ordering": ["asc"],
+          "orderIndices": [0],
+          "inColumnTypes": ["NUMERIC", "VARCHAR", "VARCHAR", "DATE", "NUMERIC", "NUMERIC", "VARCHAR"],
+          "input": [],
+          "tableName": "crime"
+        },
+        {
+          "id": 6,
+          "type": "remoteView",
+          "rowcount": 100000,
+          "cumulative-cost": 3000,
+          "ordering": ["asc"],
+          "orderIndices": [0],
+          "inColumnTypes": ["NUMERIC", "NUMERIC"],
+          "input": [],
+          "tableName": "remoteView1230",
+          "subplans": [2]
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "location": "Frankfurt",
+      "execution-engine": "MySql",
+      "executor-actorRef": "akka://sysC@hostC:2552/user/executor",
+      "queryType": "relationalAlgebra",
+      "query": [
+        {
+          "id": 0,
+          "type": "project",
+          "rowcount": 100000,
+          "cumulative-cost": 1500,
+          "ordering": ["asc"],
+          "orderIndices": [0],
+          "inColumnTypes": ["NUMERIC", "CHAR", "NUMERIC", "VARCHAR", "NUMERIC", "VARCHAR"],
+          "input": [1],
+          "fieldOrdinals": [0, 4]
+        },
+        {
+          "id": 1,
+          "type": "tablescan",
+          "rowcount": 100000,
+          "cumulative-cost": 1000,
+          "ordering": ["asc"],
+          "orderIndices": [0],
+          "inColumnTypes": ["NUMERIC", "CHAR", "NUMERIC", "VARCHAR", "NUMERIC", "VARCHAR"],
+          "input": [],
+          "tableName": "criminals"
+        }
+      ]
+    }
+  ],
+  "data-transfers": [
+    {
+      "id": 0,
+      "origin": [2],
+      "destination": [1],
+      "direct/facilitated": "direct",
+      "push/pull": "pull",
+      "method": "mysql_fdw"
+    },
+    {
+      "id": 1,
+      "origin": [1],
+      "destination": [0],
+      "direct/facilitated": "facilitated",
+      "push/pull": "push",
+      "method": "file-transfer"
+    }
+  ]
+}
