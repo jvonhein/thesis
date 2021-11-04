@@ -67,8 +67,8 @@ public class App {
                 .join(JoinRelType.INNER,
                         builder.call(
                                 SqlStdOperatorTable.EQUALS,
-                                builder.field(0),
-                                builder.field(0)
+                                builder.field(2, 0, 0),
+                                builder.field(2, 1, 0)
                         ))
                 .build();
 

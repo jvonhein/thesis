@@ -86,7 +86,7 @@ public class RelFactory {
             final SqlOperator sqlOperator = extractOperator(operator.path("conditions").path(i).path("operator"));
             int leftOrdinal = operator.path("conditions").path(i).path("leftOrdinal").asInt();
             int rightOrdinal = operator.path("conditions").path(i).path("rightOrdinal").asInt();
-            conditions[i] = relBuilder.call(sqlOperator, relBuilder.field(leftOrdinal), relBuilder.field(rightOrdinal));
+            conditions[i] = relBuilder.call(sqlOperator, relBuilder.field(2, 0, leftOrdinal), relBuilder.field(2, 1, rightOrdinal));
         }
 
         if (conditions.length == 1){
@@ -160,6 +160,7 @@ public class RelFactory {
                         fields[i] = relBuilder.field(aggCallNode.path("indices").path(i).asInt());
                     }
                     aggCalls[i] = predicate ? relBuilder.count(distinct, alias, fields).filter(condition) : relBuilder.count(distinct, alias, fields);
+                    // System.out.println(condition.toString());
                     break;
 
                 // TODO: implement more aggregations
@@ -175,19 +176,19 @@ public class RelFactory {
 
     // helper method to correctly extract the operand correctly from a json-node
     private static RexNode extractOperand(JsonNode node, RelBuilder relBuilder) throws Exception {
-        RexNode operand = null;
         if (node.path("type").asText().equals("field")){
-            operand = relBuilder.field(node.path("field").asInt());
+            final int field = node.path("fieldOrdinal").asInt();
+            return relBuilder.field(field);
         } else if (node.path("type").asText().equals("literal")){
             if (node.path("dataType").asText().equals("Int")){
-                operand = relBuilder.literal(node.path("value").asInt());
+                return relBuilder.literal(node.path("value").asInt());
             } else if (node.path("dataType").asText().equals("String")){
-                operand = relBuilder.literal(node.path("value").asText());
+                return relBuilder.literal(node.path("value").asText());
             }
         } else {
             throw new Exception("not yet implemented. So far only support for fields and String or Number literals");
         }
-        return operand;
+        return null;
     }
 
     private  static SqlOperator extractOperator(JsonNode node){

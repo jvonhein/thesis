@@ -65,16 +65,17 @@ public class TranslationTest {
         final RelToSqlConverter relToSqlConverter = new RelToSqlConverter(dialect);
 
         // use factory methods to translate the json & print
-//        final RelNode first = RelFactory.translateJson(json,"akka://sys@hostA:2552/user/executor" , builder);
-//        System.out.println(RelOptUtil.toString(first));
-//        SqlImplementor.Result rs1 = relToSqlConverter.visitRoot(first);
-//        System.out.println(rs1.asStatement().toString());
-
+        final RelNode first = RelFactory.translateJson(json,"akka://sys@hostA:2552/user/executor" , builder);
+        System.out.println(RelOptUtil.toString(first));
+        SqlImplementor.Result rs1 = relToSqlConverter.visitRoot(first);
+        System.out.println(rs1.asStatement().toString());
+        System.out.println();
 
         final RelNode second = RelFactory.translateJson(json,"akka://sysB@hostB:2552/user/executor" , builder);
         System.out.println(RelOptUtil.toString(second));
         SqlImplementor.Result rs2 = relToSqlConverter.visitRoot(second);
         System.out.println(rs2.asStatement().toString());
+        System.out.println();
 
 
         final RelNode third = RelFactory.translateJson(json,"akka://sysC@hostC:2552/user/executor" , builder);
