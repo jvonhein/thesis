@@ -1,0 +1,48 @@
+version: "3.7"
+
+services:
+    
+    postgres:
+        image: postgres
+        container_name: postgres
+        restart: always
+        build: ./postgres
+        expose:
+         - "5432"
+
+    mdb1:
+        image: mdb_crime
+        container_name: mdb_crime
+        build:
+            context: ./mariadb
+            dockerfile: DockerfileCrime
+        restart: always
+        expose:
+         - "3306"
+        environment:
+        - MYSQL_ROOT_PASSWORD=123456
+        - MYSQL_DATABASE=mdb
+        - MYSQL_USER=mariadb
+        - MYSQL_PASSWORD=123456
+        
+
+    mdb2:
+        image: mdb_criminals
+        container_name: mdb_criminals
+        build:
+            context: ./mariadb
+            dockerfile: DockerfileCriminal
+        restart: always
+        expose:
+         - "3306"
+        environment:
+        - MYSQL_ROOT_PASSWORD=123456
+        - MYSQL_DATABASE=mdb
+        - MYSQL_USER=mariadb
+        - MYSQL_PASSWORD=123456
+
+    ne1:
+        image: node_executor
+        container_name: ne1
+        build: ./nodeExecutor
+        restart: always

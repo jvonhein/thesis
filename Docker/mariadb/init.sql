@@ -1,0 +1,12 @@
+GRANT ALL PRIVILEGES ON *.* TO 'mariadb'@'%';
+FlUSH PRIVILEGES;
+CREATE TABLE IF NOT EXISTS criminals (
+    id INT UNSIGNED NOT NULL,
+    gender CHAR(1) NULL,
+    age TINYINT UNSIGNED NULL,
+    adress VARCHAR(255) NULL,
+    vaccine_status TINYINT NOT NULL,
+    details VARCHAR(255) NULL,
+    PRIMARY KEY (`id`)
+);
+LOAD DATA INFILE '/tmp/criminals.csv' INTO TABLE criminals FIELDS TERMINATED BY ';' LINES TERMINATED BY '\n' IGNORE 1 ROWS;

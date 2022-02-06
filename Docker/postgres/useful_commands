@@ -1,0 +1,12 @@
+CREATE EXTENSION odbc_fdw
+
+CREATE SERVER mdb1 FOREIGN DATA WRAPPER OPTIONS (dsn 'MariaDB-server');
+
+CREATE USER MAPPING FOR postgres SERVER mdb1 OPTIONS (odbc_UID 'root', odbc_PWD '');
+
+IMPORT FOREIGN SCHEMA test FROM SERVER mdb1 INTO PUBLIC 
+OPTIONS (
+    odbc_DATABASE 'mdb',
+    table 'newTableName',
+    sql_query 'select * from criminals'
+);
