@@ -3,14 +3,13 @@ package agora.execution;
 import java.sql.*;
 
 public class App {
-    private final String url = "jdbc:postgresql://localhost:5433/dvdrental";
-    private final String user = "postgres";
-    private final String password = "agora";
+    private final String url = "jdbc:postgresql://postgres:5432/db1";
+    private final String user = "odbc_user";
+    private final String password = "password";
 
     public static void main(String[] args){
         App app = new App();
-        app.connect();
-        System.out.println(app.getActorCount());
+        app.selectHealthTest();
     }
 
     public Connection connect() {
@@ -29,20 +28,18 @@ public class App {
      * Get actors count
      * @return
      */
-    public int getActorCount() {
-        String SQL = "SELECT count(*) FROM actor";
-        int count = 0;
+    public void selectHealthTest() {
+        String SQL = "SELECT bundesland, population_total, vaccinated_firstshot FROM health";
 
         try {
             Connection conn = connect();
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery(SQL);
-            rs.next();
-            count = rs.getInt(1);
+            while(rs.next()){
+                System.out.println(rs.getString(0) + " | " + rs.getInt(1) + " | " + rs.getInt(2));
+            }
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
         }
-
-        return count;
     }
 }
