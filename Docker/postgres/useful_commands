@@ -7,7 +7,7 @@ CREATE USER MAPPING FOR postgres SERVER mdb1 OPTIONS (odbc_UID 'root', odbc_PWD 
 IMPORT FOREIGN SCHEMA test FROM SERVER mdb1 INTO PUBLIC 
 OPTIONS (
     odbc_DATABASE 'mdb',
-    table 'newTableName',
+    table 'criminals_r',
     sql_query 'select * from criminals'
 );
 

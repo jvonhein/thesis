@@ -1,109 +1,198 @@
 {
   "name": "Vaccine Crime Query",
   "id": 123,
-  "continuous": "false",
-  "iterations": "1",
-  "subplans": [
+  "workload": [
     {
       "id": 0,
       "location": "Berlin",
-      "execution-engine": "Hyper",
+      "execution-engine": "postgres",
       "executor-actorRef": "akka://sys@hostA:2552/user/executor",
-      "queryType": "relationalAlgebra",
-      "query": [
+      "local-execution-plan": [
         {
           "id": 0,
-          "type": "project",
-          "rowcount": 16,
-          "cumulative-cost": 20000,
-          "ordering": ["asc"],
-          "orderIndices": [0],
-          "inColumnTypes": ["VARCHAR", "NUMERIC", "NUMERIC", "NUMERIC", "NUMERIC"],
-          "input": [1],
+          "iterative": "false",
+          "start-condition": {
+            "requirements": [
+              {
+                "type": "remote execution finished",
+                "message": {
+                  "status": "success",
+                  "workload-id": 1,
+                  "local-execution-plan-index": 0
+                }
+              }
+            ]
+          },
+          "failure-strategy": "none",
+          "input": [
+            {
+              "id": 0,
+              "continous": "false",
+              "direction": "pull",
+              "type": "remoteView",
+              "view": {
+                "remote-view-name": "temp_view_123_1_0",
+                "local-new-name": "remote_view_123_1_0",
+                "workload-id": 1,
+                "local-execution-plan-index": 0
+              }
+            }
+          ],
           "output": [
             {
-              "type": "field",
-              "fieldOrdinal": 0
+              "type": "file",
+              "path": "/tmp/q_123.csv"
+            }
+          ],
+          "operators": [
+            {
+              "id": 0,
+              "type": "project",
+              "rowcount": 16,
+              "cumulative-cost": 20000,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "VARCHAR",
+                "NUMERIC",
+                "NUMERIC",
+                "NUMERIC",
+                "NUMERIC"
+              ],
+              "input": [
+                1
+              ],
+              "output": [
+                {
+                  "type": "field",
+                  "fieldOrdinal": 0
+                },
+                {
+                  "type": "field",
+                  "fieldOrdinal": 1
+                },
+                {
+                  "type": "field",
+                  "fieldOrdinal": 3
+                },
+                {
+                  "type": "field",
+                  "fieldOrdinal": 4
+                }
+              ]
             },
             {
-              "type": "field",
-              "fieldOrdinal": 1
+              "id": 1,
+              "type": "join",
+              "rowcount": 16,
+              "cumulative-cost": 19900,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                [
+                  "VARCHAR",
+                  "NUMERIC"
+                ],
+                [
+                  "VARCHAR",
+                  "NUMERIC",
+                  "NUMERIC"
+                ]
+              ],
+              "input": [
+                2,
+                4
+              ],
+              "jointype": "INNER",
+              "conditions": [
+                {
+                  "operator": "EQUALS",
+                  "leftOrdinal": 0,
+                  "rightOrdinal": 0
+                }
+              ]
             },
             {
-              "type": "field",
-              "fieldOrdinal": 3
+              "id": 2,
+              "type": "project",
+              "rowcount": 16,
+              "cumulative-cost": 50,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "VARCHAR",
+                "NUMERIC",
+                "NUMERIC",
+                "NUMERIC",
+                "NUMERIC",
+                "NUMERIC"
+              ],
+              "input": [
+                3
+              ],
+              "output": [
+                {
+                  "type": "field",
+                  "fieldOrdinal": 0
+                },
+                {
+                  "type": "field",
+                  "fieldOrdinal": 5
+                }
+              ]
             },
             {
-              "type": "field",
-              "fieldOrdinal": 4
+              "id": 3,
+              "type": "tablescan",
+              "rowcount": 16,
+              "cumulative-cost": 30,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "VARCHAR",
+                "NUMERIC",
+                "NUMERIC",
+                "NUMERIC",
+                "NUMERIC",
+                "NUMERIC"
+              ],
+              "input": [],
+              "tableName": "health",
+              "database": "db1"
+            },
+            {
+              "id": 4,
+              "type": "tablescan",
+              "rowcount": 16,
+              "cumulative-cost": 30,
+              "ordering": [],
+              "orderIndices": [],
+              "inColumnTypes": [
+                "VARCHAR",
+                "NUMERIC",
+                "NUMERIC"
+              ],
+              "input": [],
+              "tableName": "remote_view_123_1_0",
+              "database": "db1"
             }
           ]
-        },
-        {
-          "id": 1,
-          "type": "join",
-          "rowcount": 16,
-          "cumulative-cost": 19900,
-          "ordering": ["asc"],
-          "orderIndices": [0],
-          "inColumnTypes": [
-            ["VARCHAR", "NUMERIC"],
-            ["VARCHAR","NUMERIC", "NUMERIC"]],
-          "input": [2, 4],
-          "jointype": "INNER",
-          "conditions": [
-            {
-              "operator": "EQUALS",
-              "leftOrdinal": 0,
-              "rightOrdinal": 0
-            }
-          ]
-        },
-        {
-          "id": 2,
-          "type": "project",
-          "rowcount": 16,
-          "cumulative-cost": 50,
-          "ordering": ["asc"],
-          "orderIndices": [0],
-          "inColumnTypes": ["VARCHAR", "NUMERIC", "NUMERIC", "NUMERIC", "NUMERIC", "NUMERIC"],
-          "input": [3],
-          "output": [
-            {
-              "type": "field",
-              "fieldOrdinal": 0
-            },
-            {
-              "type": "field",
-              "fieldOrdinal": 5
-            }
-          ]
-        },
-        {
-          "id": 3,
-          "type": "tablescan",
-          "rowcount": 16,
-          "cumulative-cost": 30,
-          "ordering": ["asc"],
-          "orderIndices": [0],
-          "inColumnTypes": ["VARCHAR", "NUMERIC", "NUMERIC", "NUMERIC", "NUMERIC", "NUMERIC"],
-          "input": [],
-          "tableName": "health"
-        }, 
-        {
-          "id": 4,
-          "type": "tablescan",
-          "rowcount": 16,
-          "cumulative-cost": 30,
-          "ordering": [],
-          "orderIndices": [],
-          "inColumnTypes": [
-            "VARCHAR", 
-            "NUMERIC",
-            "NUMERIC"
-            ],
-          "input": [],
-          "tableName": "TempExternalInput0"
         }
       ]
     },
@@ -112,219 +201,394 @@
       "location": "Frankfurt",
       "execution-engine": "Postgres",
       "executor-actorRef": "akka://sysB@hostB:2552/user/executor",
-      "queryType": "relationalAlgebra",
-      "query": [
+      "local-execution-plan": [
         {
           "id": 0,
-          "type": "aggregate",
-          "inRowcount": 50000,
-          "cumulative-cost": 18500,
-          "ordering": [],
-          "orderIndices": [],
-          "inColumnTypes": [
-            "VARCHAR",
-            "NUMERIC"
-            ],
-          "input": [1],
-          "GroupingIndices": [0],
-          "aggCalls": [
-            {
-              "type": "Count",
-              "indices": [1],
-              "distinct": "false"
-            },
-            {
-              "type": "Count",
-              "indices": []
-            }
-          ]
-        },
-        {
-          "id": 1,
-          "type": "project",
-          "rowcount": 50000,
-          "cumulative-cost": 10000,
-          "ordering": ["asc"],
-          "orderIndices": [0],
-          "inColumnTypes": ["VARCHAR", "NUMERIC", "NUMERIC","NUMERIC"],
-          "input": [2],
-          "output": [
-            {
-              "type": "field",
-              "fieldOrdinal": 0
-            },
-            {
-              "type": "expression",
-              "CASE": {
-                "when": [
-                  {
-                    "operator": "EQUALS",
-                    "operands": [
-                      {
-                      "type": "field",
-                      "fieldOrdinal": 3
-                      },
-                      {
-                      "type": "literal",
-                      "dataType": "Int",
-                      "value": 1
-                      }
-                    ]
-                  }
-                ],
-                "then": [
-                  {
-                    "type": "literal",
-                    "dataType": "Int",
-                    "value": 1
-                  }
-                ],
-                "else": {
-                  "type": "literal",
-                  "dataType": "Null",
-                  "value": null
+          "iterative": "false",
+          "start-condition": {
+            "requirements": [
+              {
+                "type": "remote execution finished",
+                "message": {
+                  "status": "success",
+                  "workload-id": 2,
+                  "local-execution-plan-index": 0
                 }
               }
-            }
-          ]
-        },
-        {
-          "id": 2,
-          "type": "join",
-          "rowcount": 50000,
-          "cumulative-cost": "10000",
-          "ordering": [],
-          "orderIndices": [],
-          "inColumnTypes": [
-            ["VARCHAR", "NUMERIC"],
-            ["NUMERIC", "NUMERIC"]
-          ],
-          "input": [3, 6],
-          "jointype": "INNER",
-          "conditions": [
+            ]
+          },
+          "failure-strategy": "none",
+          "input": [
             {
-              "operator": "EQUALS",
-              "leftOrdinal": 1,
-              "rightOrdinal": 0
+              "id": 0,
+              "continous": "false",
+              "direction": "pull",
+              "type": "remoteView",
+              "view": {
+                "remote-view-name": "temp_view_123_2_0",
+                "local-new-name": "remote_view_123_2_0",
+                "workload-id": 2,
+                "local-execution-plan-index": 0
+              }
             }
-          ]
-        }, 
-        {
-          "id": 3,
-          "type": "project",
-          "rowcount": 50000,
-          "cumulative-cost": 4500,
-          "ordering": ["asc"],
-          "orderIndices": [0],
-          "inColumnTypes": ["NUMERIC", "VARCHAR", "VARCHAR", "DATE", "NUMERIC", "NUMERIC", "VARCHAR"],
-          "input": [4],
+          ],
           "output": [
             {
-              "type": "field",
-              "fieldOrdinal": 1
+              "type": "view",
+              "name": "temp_view_123_1_0"
+            }
+          ],
+          "on-success": {
+            "message": {
+              "to": 0,
+              "status": "success",
+              "workload-id": 1,
+              "local-execution-plan-index": 0,
+              "view-name": "temp_view_123_1_0"
+            }
+          },
+          "operators": [
+            {
+              "id": 0,
+              "type": "aggregate",
+              "inRowcount": 50000,
+              "cumulative-cost": 18500,
+              "ordering": [],
+              "orderIndices": [],
+              "inColumnTypes": [
+                "VARCHAR",
+                "NUMERIC"
+              ],
+              "input": [
+                1
+              ],
+              "GroupingIndices": [
+                0
+              ],
+              "aggCalls": [
+                {
+                  "type": "Count",
+                  "indices": [
+                    1
+                  ],
+                  "distinct": "false"
+                },
+                {
+                  "type": "Count",
+                  "indices": []
+                }
+              ]
             },
             {
-              "type": "field",
-              "fieldOrdinal": 4
-            }
-          ]
-        },
-        {
-          "id": 4,
-          "type": "filter",
-          "rowcount": 100000,
-          "cumulative-cost": 2000,
-          "ordering": "asc",
-          "orderIndices": [0],
-          "inColumnTypes": ["NUMERIC", "VARCHAR", "VARCHAR", "DATE", "NUMERIC", "NUMERIC", "VARCHAR"],
-          "input": [5],
-          "predicates": [
-            {
-              "operator": "GREATER_THAN",
-              "operands": [{
-                "type": "field",
-                "fieldOrdinal": 3
-              },{
-                "type": "literal",
-                "dataType": "String",
-                "value": "2021-07-00"
-              }]
+              "id": 1,
+              "type": "project",
+              "rowcount": 50000,
+              "cumulative-cost": 10000,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "VARCHAR",
+                "NUMERIC",
+                "NUMERIC",
+                "NUMERIC"
+              ],
+              "input": [
+                2
+              ],
+              "output": [
+                {
+                  "type": "field",
+                  "fieldOrdinal": 0
+                },
+                {
+                  "type": "expression",
+                  "CASE": {
+                    "when": [
+                      {
+                        "operator": "EQUALS",
+                        "operands": [
+                          {
+                            "type": "field",
+                            "fieldOrdinal": 3
+                          },
+                          {
+                            "type": "literal",
+                            "dataType": "Int",
+                            "value": 1
+                          }
+                        ]
+                      }
+                    ],
+                    "then": [
+                      {
+                        "type": "literal",
+                        "dataType": "Int",
+                        "value": 1
+                      }
+                    ],
+                    "else": {
+                      "type": "literal",
+                      "dataType": "Null",
+                      "value": null
+                    }
+                  }
+                }
+              ]
             },
             {
-              "operator": "EQUALS",
-              "operands": [{
-                "type": "field",
-                "fieldOrdinal": 2
-              },{
-                "type": "literal",
-                "dataType": "String",
-                "value": "bodily_harm"
-              }]
+              "id": 2,
+              "type": "join",
+              "rowcount": 50000,
+              "cumulative-cost": "10000",
+              "ordering": [],
+              "orderIndices": [],
+              "inColumnTypes": [
+                [
+                  "VARCHAR",
+                  "NUMERIC"
+                ],
+                [
+                  "NUMERIC",
+                  "NUMERIC"
+                ]
+              ],
+              "input": [
+                3,
+                6
+              ],
+              "jointype": "INNER",
+              "conditions": [
+                {
+                  "operator": "EQUALS",
+                  "leftOrdinal": 1,
+                  "rightOrdinal": 0
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "type": "project",
+              "rowcount": 50000,
+              "cumulative-cost": 4500,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "NUMERIC",
+                "VARCHAR",
+                "VARCHAR",
+                "DATE",
+                "NUMERIC",
+                "NUMERIC",
+                "VARCHAR"
+              ],
+              "input": [
+                4
+              ],
+              "output": [
+                {
+                  "type": "field",
+                  "fieldOrdinal": 1
+                },
+                {
+                  "type": "field",
+                  "fieldOrdinal": 4
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "type": "filter",
+              "rowcount": 100000,
+              "cumulative-cost": 2000,
+              "ordering": "asc",
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "NUMERIC",
+                "VARCHAR",
+                "VARCHAR",
+                "DATE",
+                "NUMERIC",
+                "NUMERIC",
+                "VARCHAR"
+              ],
+              "input": [
+                5
+              ],
+              "predicates": [
+                {
+                  "operator": "GREATER_THAN",
+                  "operands": [
+                    {
+                      "type": "field",
+                      "fieldOrdinal": 3
+                    },
+                    {
+                      "type": "literal",
+                      "dataType": "String",
+                      "value": "2021-07-00"
+                    }
+                  ]
+                },
+                {
+                  "operator": "EQUALS",
+                  "operands": [
+                    {
+                      "type": "field",
+                      "fieldOrdinal": 2
+                    },
+                    {
+                      "type": "literal",
+                      "dataType": "String",
+                      "value": "bodily_harm"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "type": "tablescan",
+              "rowcount": 250000,
+              "cumulative-cost": 1500,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "NUMERIC",
+                "VARCHAR",
+                "VARCHAR",
+                "DATE",
+                "NUMERIC",
+                "NUMERIC",
+                "VARCHAR"
+              ],
+              "input": [],
+              "tableName": "crime",
+              "database": "mdb"
+            },
+            {
+              "id": 6,
+              "type": "tablescan",
+              "rowcount": 100000,
+              "cumulative-cost": 3000,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "NUMERIC",
+                "NUMERIC"
+              ],
+              "input": [],
+              "tableName": "remote_view_123_2_0",
+              "database": "mdb"
             }
           ]
-        },
-        {
-          "id": 5,
-          "type": "tablescan",
-          "rowcount": 250000,
-          "cumulative-cost": 1500,
-          "ordering": ["asc"],
-          "orderIndices": [0],
-          "inColumnTypes": ["NUMERIC", "VARCHAR", "VARCHAR", "DATE", "NUMERIC", "NUMERIC", "VARCHAR"],
-          "input": [],
-          "tableName": "crime"
-        },
-        {
-          "id": 6,
-          "type": "remoteView",
-          "rowcount": 100000,
-          "cumulative-cost": 3000,
-          "ordering": ["asc"],
-          "orderIndices": [0],
-          "inColumnTypes": ["NUMERIC", "NUMERIC"],
-          "input": [],
-          "tableName": "remoteView1230",
-          "subplans": [2]
         }
       ]
     },
     {
-      "id": 1,
+      "id": 2,
       "location": "Frankfurt",
       "execution-engine": "MySql",
       "executor-actorRef": "akka://sysC@hostC:2552/user/executor",
-      "queryType": "relationalAlgebra",
-      "query": [
+      "local-execution-plan": [
         {
           "id": 0,
-          "type": "project",
-          "rowcount": 100000,
-          "cumulative-cost": 1500,
-          "ordering": ["asc"],
-          "orderIndices": [0],
-          "inColumnTypes": ["NUMERIC", "CHAR", "NUMERIC", "VARCHAR", "NUMERIC", "VARCHAR"],
-          "input": [1],
+          "iterative": "false",
+          "start-condition": {
+            "requirements": []
+          },
+          "failure-strategy": "none",
+          "on-success": {
+            "message": {
+              "to": 1,
+              "status": "success",
+              "workload-id": 2,
+              "local-execution-plan-index": 0,
+              "view-name": "temp_view_123_2_0"
+            }
+          },
+          "input": [],
           "output": [
             {
-              "type": "field",
-              "fieldOrdinal": 0
+              "type": "view",
+              "name": "temp_view_123_2_0"
+            }
+          ],
+          "operators": [
+            {
+              "id": 0,
+              "type": "project",
+              "rowcount": 100000,
+              "cumulative-cost": 1500,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "NUMERIC",
+                "CHAR",
+                "NUMERIC",
+                "VARCHAR",
+                "NUMERIC",
+                "VARCHAR"
+              ],
+              "input": [
+                1
+              ],
+              "output": [
+                {
+                  "type": "field",
+                  "fieldOrdinal": 0
+                },
+                {
+                  "type": "field",
+                  "fieldOrdinal": 4
+                }
+              ]
             },
             {
-              "type": "field",
-              "fieldOrdinal": 4
+              "id": 1,
+              "type": "tablescan",
+              "rowcount": 100000,
+              "cumulative-cost": 1000,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "NUMERIC",
+                "CHAR",
+                "NUMERIC",
+                "VARCHAR",
+                "NUMERIC",
+                "VARCHAR"
+              ],
+              "input": [],
+              "tableName": "criminals",
+              "database": "mdb"
             }
           ]
-        },
-        {
-          "id": 1,
-          "type": "tablescan",
-          "rowcount": 100000,
-          "cumulative-cost": 1000,
-          "ordering": ["asc"],
-          "orderIndices": [0],
-          "inColumnTypes": ["NUMERIC", "CHAR", "NUMERIC", "VARCHAR", "NUMERIC", "VARCHAR"],
-          "input": [],
-          "tableName": "criminals"
         }
       ]
     }
@@ -332,16 +596,24 @@
   "data-transfers": [
     {
       "id": 0,
-      "origin": [2],
-      "destination": [1],
+      "origin": [
+        2
+      ],
+      "destination": [
+        1
+      ],
       "direct/facilitated": "direct",
       "push/pull": "pull",
       "method": "mysql_fdw"
     },
     {
       "id": 1,
-      "origin": [1],
-      "destination": [0],
+      "origin": [
+        1
+      ],
+      "destination": [
+        0
+      ],
       "direct/facilitated": "facilitated",
       "push/pull": "push",
       "method": "file-transfer"

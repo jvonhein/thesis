@@ -1,6 +1,7 @@
 package agora.iqr;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.AbstractSchema;
@@ -52,14 +53,40 @@ public class TestSchema extends AbstractSchema {
                     .build();
         });
 
+        final TestTable country_stats = new TestTable(relDataTypeFactory -> {
+            RelDataTypeFactory.Builder builder = new RelDataTypeFactory.Builder(relDataTypeFactory);
+            return builder
+                    .add("bundesland", SqlTypeName.VARCHAR)
+                    .add("population", SqlTypeName.INTEGER)
+                    .add("size", SqlTypeName.INTEGER)
+                    .add("dummy_data", SqlTypeName.VARCHAR)
+                    .build();
+        });
+
+        final TestTable vaccine_data = new TestTable(relDataTypeFactory -> {
+            RelDataTypeFactory.Builder builder = new RelDataTypeFactory.Builder(relDataTypeFactory);
+            return builder
+                    .add("batch_number", SqlTypeName.VARCHAR)
+                    .add("shot_number", SqlTypeName.INTEGER)
+                    .add("date", SqlTypeName.DATE)
+                    .add("dummy_data", SqlTypeName.VARCHAR)
+                    .add("bundesland", SqlTypeName.VARCHAR)
+                    .build();
+        });
+
         HashMap<String, Table> tableMap = new HashMap<>();
         tableMap.put("health", health);
         tableMap.put("crime", crime);
         tableMap.put("criminals", criminals);
+        tableMap.put("country_stats", country_stats);
+        tableMap.put("vaccine_data", vaccine_data);
 
         this.tableMap = tableMap;
     }
 
+    public TestSchema addTableFromJsonNode(JsonNode node){
+        return this;
+    }
 
     public TestSchema(Map<String, Table> tableMap) {
         this.tableMap = tableMap;

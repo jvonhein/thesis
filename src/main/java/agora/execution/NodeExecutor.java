@@ -2,6 +2,7 @@ package agora.execution;
 
 import agora.JsonSerializable;
 import agora.iqr.RelFactory;
+import agora.iqr.TestSchema;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -68,6 +69,7 @@ public class NodeExecutor extends AbstractBehavior<NodeExecutor.ExecutorMessage>
     private final String jdbcUrl = System.getenv("JDBC_URL");
     private final String jdbcUser = System.getenv("JDBC_USER");
     private final String jdbcPw = System.getenv("JDBC_PW");
+    private final TestSchema vaccineCrimeSchema = new TestSchema(); // schema of the local execution engine
 
 
     private NodeExecutor(ActorContext<ExecutorMessage> context) {
