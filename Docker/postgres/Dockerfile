@@ -42,6 +42,8 @@ RUN git clone https://github.com/atris/JDBC_FDW.git \
  && make install USE_PGXS=1
 
 COPY tables/health.csv /tables/
+# loads table health and creates odbc_user with password 'password'
+COPY init.sql /
 
 USER postgres
 
@@ -49,17 +51,18 @@ USER postgres
 RUN    /etc/init.d/postgresql start &&\
     psql --command "ALTER USER postgres WITH PASSWORD '123456';" &&\
     createdb -O postgres db1 &&\
-    psql -d db1 --command "CREATE TABLE health( \
-        bundesland VARCHAR(255), \
-        population_total INTEGER, \
-        vaccinated_firstshot INTEGER, \
-        vaccinated_secondshot INTEGER, \
-        percent_vaccinated_firstshot NUMERIC(4,3), \
-        percent_vaccinated_secondshot NUMERIC(4,3));" &&\
-   psql -d db1 --command "COPY health(bundesland, population_total, vaccinated_firstshot, vaccinated_secondshot, percent_vaccinated_firstshot, percent_vaccinated_secondshot) \
-        FROM '/tables/health.csv' \
-        DELIMITER ';' \
-        CSV HEADER;"
+    psqql -d db1 -f /init.sql
+#    psql -d db1 --command "CREATE TABLE health( \
+#        bundesland VARCHAR(255), \
+#        population_total INTEGER, \
+#        vaccinated_firstshot INTEGER, \
+#        vaccinated_secondshot INTEGER, \
+#        percent_vaccinated_firstshot NUMERIC(4,3), \
+#        percent_vaccinated_secondshot NUMERIC(4,3));" &&\
+#   psql -d db1 --command "COPY health(bundesland, population_total, vaccinated_firstshot, vaccinated_secondshot, percent_vaccinated_firstshot, percent_vaccinated_secondshot) \
+#        FROM '/tables/health.csv' \
+#        DELIMITER ';' \
+#        CSV HEADER;"
 
 RUN echo "host all  all    0.0.0.0/0  md5" >> /etc/postgresql/12/main/pg_hba.conf
 
