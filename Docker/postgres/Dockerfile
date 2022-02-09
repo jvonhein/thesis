@@ -28,8 +28,9 @@ RUN mkdir build && cd build && cmake ../mariadb-connector-odbc/ -DCMAKE_BUILD_TY
     && cmake --build . --config RelWithDebInfo \
     && make install
 
-COPY config/mariadb.ini /
-RUN cat mariadb.ini >> /etc/odbcinst.ini
+COPY config/ /
+RUN cat config/mariadbDriver.ini >> /etc/odbcinst.ini &&\
+    cat config/dataSources.ini >> /etc/odbc.ini
 
 #RUN curl -O https://downloads.cloudera.com/connectors/hive_odbc_2.6.1.1001/Linux/ClouderaHiveODBC-2.6.1.1001-1.x86_64.rpm
 #RUN alien -i ClouderaHiveODBC-2.6.1.1001-1.x86_64.rpm

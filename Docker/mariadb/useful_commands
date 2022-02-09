@@ -1,4 +1,4 @@
-isql -v -k "DRIVER={PostgreSQL_Unicode};Server=172.24.0.2;UID=odbc_user;PWD=password;Database=db1"
+isql -v -k "DRIVER={PostgreSQL Unicode};Server=172.31.0.6;UID=odbc_user;PWD=password;Database=db1"
 # use CONNECT to other mariadb database
 CREATE TABLE tableName (
     n_nationkey INT(11) NOTNULL,
@@ -9,4 +9,7 @@ CREATE TABLE tableName (
 
 # create table which points to a view/table named health_view on a remote datasource connected via odbc
 CREATE TABLE newName engine=connect table_type=ODBC block_size=10 tabname='health_view'
-CONNECTION='DRIVER={PostgreSQL_Unicode};Server=172.24.0.2;UID=odbc_user;PWD=password;Database=db1';
+CONNECTION='DRIVER={PostgreSQL Unicode};Server=172.24.0.2;UID=odbc_user;PWD=password;Database=db1';1
+
+CREATE TABLE remoteHealth engine=connect table_type=ODBC block_size=10 tabname='health'
+CONNECTION='DRIVER={PostgreSQL Unicode};Server=postgres;UID=odbc_user;PWD=password;Database=db1';
