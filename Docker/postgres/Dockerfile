@@ -51,7 +51,7 @@ USER postgres
 RUN    /etc/init.d/postgresql start &&\
     psql --command "ALTER USER postgres WITH PASSWORD '123456';" &&\
     createdb -O postgres db1 &&\
-    psqql -d db1 -f /init.sql
+    psql -d db1 -f /init.sql
 #    psql -d db1 --command "CREATE TABLE health( \
 #        bundesland VARCHAR(255), \
 #        population_total INTEGER, \
