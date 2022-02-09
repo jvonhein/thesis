@@ -15,7 +15,7 @@ import scala.collection.immutable.Set;
  *
  * Should spawn a separate Actor per user query
  */
-public class AgoraExecutor extends AbstractBehavior<AgoraExecutor.Query> {
+public class ExecutionManager extends AbstractBehavior<ExecutionManager.Query> {
 
     // Messages
     interface Query {}
@@ -41,7 +41,7 @@ public class AgoraExecutor extends AbstractBehavior<AgoraExecutor.Query> {
 
 
     // Create & Constructor
-    private AgoraExecutor(ActorContext<AgoraExecutor.Query> context) {
+    private ExecutionManager(ActorContext<ExecutionManager.Query> context) {
         super(context);
         this.context = context;
         this.listingResponseAdapter = context.messageAdapter(Receptionist.Listing.class, ListingResponse::new);
@@ -49,11 +49,11 @@ public class AgoraExecutor extends AbstractBehavior<AgoraExecutor.Query> {
 
         context.getSystem()
                 .receptionist()
-                .tell(Receptionist.subscribe(ExecutionProvider.localExecutorServiceKey, listingResponseAdapter));
+                .tell(Receptionist.subscribe(NodeExecutor.localExecutorServiceKey, listingResponseAdapter));
     }
 
     public static Behavior<Query> create() {
-        return Behaviors.setup(AgoraExecutor::new);
+        return Behaviors.setup(ExecutionManager::new);
     }
 
     // Behavior
@@ -64,8 +64,8 @@ public class AgoraExecutor extends AbstractBehavior<AgoraExecutor.Query> {
 
     private Behavior<Query> onListingResponse(ListingResponse msg){
         context.getLog().info("\n\nListing Response received:\n");
-        final Set<ActorRef<ExecutionProvider.ExecutorMessage>> actorRefSet = msg.listing.allServiceInstances(ExecutionProvider.localExecutorServiceKey);
-        final Iterator<ActorRef<ExecutionProvider.ExecutorMessage>> iterator = actorRefSet.iterator();
+        final Set<ActorRef<NodeExecutor.ExecutorMessage>> actorRefSet = msg.listing.allServiceInstances(NodeExecutor.localExecutorServiceKey);
+        final Iterator<ActorRef<NodeExecutor.ExecutorMessage>> iterator = actorRefSet.iterator();
         while (iterator.hasNext()){
             context.getLog().info("{}", iterator.next().toString());
         }
@@ -74,7 +74,7 @@ public class AgoraExecutor extends AbstractBehavior<AgoraExecutor.Query> {
     }
 
     @Override
-    public Receive<AgoraExecutor.Query> createReceive() {
+    public Receive<ExecutionManager.Query> createReceive() {
 
         return newReceiveBuilder()
                 .onMessage(ListingResponse.class, this::onListingResponse)

@@ -22,7 +22,7 @@ public class TranslationTest {
 
     public static void main(String[] args) throws Exception {
 
-        String file = "/Users/joschavonhein/Workspace/thesis/akka-samples-cluster-java/src/main/resources/Vaccine-Crime-Plan.json";
+        String file = "/Users/joschavonhein/Workspace/thesis/project/src/main/resources/Vaccine-Crime-Plan.json";
         BufferedReader reader = new BufferedReader(new FileReader(file));
         StringBuilder resultStringBuilder = new StringBuilder();
         String line;

@@ -52,6 +52,20 @@ public class App {
                                 builder.field(2, 0, 1),
                                 builder.field(2, 1, 0)
                         ))
+                .project(builder.field(0), builder.call(
+                        SqlStdOperatorTable.CASE,
+                        builder.call(
+                                SqlStdOperatorTable.EQUALS,
+                                builder.field(3),
+                                builder.literal(1)
+                        ),
+                        builder.literal(1),
+                        builder.literal(null)
+                        ))
+                .aggregate(builder.groupKey(0),
+                        builder.count(),
+                        builder.count(builder.field(1)))
+                /*
                 .aggregate(builder.groupKey(0),
                         builder.count().filter(builder.call(
                                 SqlStdOperatorTable.EQUALS,
@@ -59,7 +73,11 @@ public class App {
                                 builder.literal(1)
                         )),
                         builder.count())
+
+                 */
                 .build();
+
+                /*
 
         final RelNode relNode = builder
                 .push(left)
@@ -72,13 +90,15 @@ public class App {
                         ))
                 .build();
 
+                 */
 
-        System.out.println(RelOptUtil.toString(relNode));
+
+        System.out.println(RelOptUtil.toString(right));
 
 
         final SqlDialect dialect = SqlDialect.DatabaseProduct.MYSQL.getDialect();
         final RelToSqlConverter relToSqlConverter = new RelToSqlConverter(dialect);
-        SqlImplementor.Result rs = relToSqlConverter.visitRoot(relNode);
+        SqlImplementor.Result rs = relToSqlConverter.visitRoot(right);
 
 
         System.out.println(rs.asStatement().toString());

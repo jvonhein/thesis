@@ -41,8 +41,52 @@ services:
         - MYSQL_USER=mariadb
         - MYSQL_PASSWORD=123456
 
+
+
     ne1:
         image: node_executor
         container_name: ne1
         build: ./nodeExecutor
         restart: always
+        ports:
+            - '1600:1600'
+        environment:
+          CLUSTER_PORT: 1600
+          CLUSTER_IP: ne1
+          SEED_PORT_1600_TCP_ADDR: ne1
+          JDBC_URL: "jdbc:postgresql://postgres:5432/db1"
+          JDBC_USER: odbc_user
+          JDBC_PW: password
+          NAME: postgres
+
+    ne2:
+        image: node_executor
+        container_name: ne2
+        build: ./nodeExecutor
+        restart: always
+        ports:
+            - '1601:1601'
+        environment:
+          CLUSTER_PORT: 1601
+          CLUSTER_IP: ne2
+          SEED_PORT_1600_TCP_ADDR: ne1
+          JDBC_URL: "jdbc:mariadb://mdb1:3006/mdb"
+          JDBC_USER: mariadb
+          JDBC_PW: 123456
+          NAME: mdb1
+
+    ne3:
+        image: node_executor
+        container_name: ne3
+        build: ./nodeExecutor
+        restart: always
+        ports:
+            - '1602:1602'
+        environment:
+          CLUSTER_PORT: 1602
+          CLUSTER_IP: ne3
+          SEED_PORT_1600_TCP_ADDR: ne1
+          JDBC_URL: "jdbc:mariadb://mdb1:3006/mdb"
+          JDBC_USER: mariadb
+          JDBC_PW: 123456
+          NAME: mdb2

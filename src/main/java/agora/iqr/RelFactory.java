@@ -94,13 +94,21 @@ public class RelFactory {
     }
 
 
-    private static RelNode buildProject(JsonNode operator, RelBuilder relBuilder){
-        RexInputRef[] ordinals = new RexInputRef[operator.path("fieldOrdinals").size()];
-        for(int i=0; i < operator.path("fieldOrdinals").size(); i++){
-            int ordinal = operator.path("fieldOrdinals").get(i).asInt();
-            ordinals[i] = relBuilder.field(ordinal);
+    private static RelNode buildProject(JsonNode operator, RelBuilder relBuilder) throws Exception {
+        int numOutColumns = operator.path("output").size();
+        RexNode[] output = new RexNode[numOutColumns];
+        for (int i=0; i< numOutColumns; i++){
+            JsonNode column = operator.get("output").get(i);
+            // simple field projection
+            if (column.get("type").asText().equals("field")){
+                output[i] = relBuilder.field(column.get("fieldOrdinal").asInt());
+            } else if (column.get("type").asText().equals("expression")){
+                if (column.has("CASE")){
+                    output[i] = buildCASEExpression(column.get("CASE"), relBuilder);
+                }
+            }
         }
-        return relBuilder.project(ordinals).build();
+        return relBuilder.project(output).build();
     }
 
     private static RelNode buildScan(JsonNode operator, RelBuilder relBuilder){
@@ -140,26 +148,22 @@ public class RelFactory {
             String alias = aggCallNode.has("alias") ? aggCallNode.path("alias").asText() : null;
             boolean distinct = aggCallNode.has("distinct") && aggCallNode.path("distinct").asText().equals("true");
 
-            // optional conditional clause
-            boolean predicate = aggCallNode.has("predicate");
-            RexNode condition = null;
-            if (aggCallNode.has("predicate")){
-                final SqlOperator sqlOperator = extractOperator(aggCallNode.path("predicate").path("operator"));
-                final RexNode operand0 = extractOperand(aggCallNode.path("predicate").path("operands").path(0), relBuilder);
-                final RexNode operand1 = extractOperand(aggCallNode.path("predicate").path("operands").path(1), relBuilder);
-                condition = relBuilder.call(sqlOperator, operand0, operand1);
+            RexNode[] fields = new RexNode[aggCallNode.path("indices").size()];
+            for (int j = 0; j < fields.length; j++) {
+                fields[j] = relBuilder.field(aggCallNode.path("indices").path(j).asInt());
             }
 
             switch (aggCallNode.path("type").asText()){
                 case "Count":
-                    RexNode[] fields = new RexNode[aggCallNode.path("indices").size()];
-                    for (int j = 0; j < fields.length; j++) {
-                        fields[i] = relBuilder.field(aggCallNode.path("indices").path(i).asInt());
-                    }
-                    aggCalls[i] = predicate ? relBuilder.count(distinct, alias, fields).filter(condition) : relBuilder.count(distinct, alias, fields);
-                    // System.out.println(condition.toString());
+                    aggCalls[i] = relBuilder.count(distinct, alias, fields);
                     break;
-
+                case "AVG":
+                    aggCalls[i] = relBuilder.avg(distinct, alias, fields[0]);
+                    break;
+                case "MIN":
+                    aggCalls[i] = relBuilder.min(alias, fields[0]);
+                case "MAX":
+                    aggCalls[i] = relBuilder.max(alias, fields[0]);
                 // TODO: implement more aggregations
             }
 
@@ -170,6 +174,29 @@ public class RelFactory {
                 .build();
     }
 
+    // builds a SQL CASE expression from jsonNode
+    private static RexNode buildCASEExpression(JsonNode node, RelBuilder relBuilder) throws Exception {
+        //sanity check
+        if (node.has("when") && node.has("then") && node.has("else") && node.get("when").size()==node.get("then").size()){
+            RexNode[] operands = new RexNode[(node.get("when").size()*2)+1];
+            // defines when and then expression
+            for (int i = 0; i < node.get("when").size(); i++) {
+                SqlOperator whenOperator = extractOperator(node.get("when").get(i).get("operator"));
+                RexNode whenOperand0 = extractOperand(node.get("when").get(i).get("operands").get(0), relBuilder);
+                RexNode whenOperand1 = extractOperand(node.get("when").get(i).get("operands").get(1), relBuilder);
+                operands[i*2]=relBuilder.call(whenOperator, whenOperand0, whenOperand1);
+                RexNode then = extractOperand(node.get("then").get(i), relBuilder);
+                operands[(i*2)+1]=then;
+            }
+            // define else expression
+            operands[operands.length-1] = extractOperand(node.get("else"), relBuilder);
+
+            return relBuilder.call(SqlStdOperatorTable.CASE, operands);
+        } else {
+            throw new Exception("sanity check for CASE expression failed!");
+        }
+    }
+
 
     // helper method to correctly extract the operand correctly from a json-node
     private static RexNode extractOperand(JsonNode node, RelBuilder relBuilder) throws Exception {
@@ -177,7 +204,9 @@ public class RelFactory {
             final int field = node.path("fieldOrdinal").asInt();
             return relBuilder.field(field);
         } else if (node.path("type").asText().equals("literal")){
-            if (node.path("dataType").asText().equals("Int")){
+            if (node.path("value").isNull() || node.path("dataType").asText().equals("Null")){
+                return relBuilder.literal(null);
+            } else if (node.path("dataType").asText().equals("Int")){
                 return relBuilder.literal(node.path("value").asInt());
             } else if (node.path("dataType").asText().equals("String")){
                 return relBuilder.literal(node.path("value").asText());

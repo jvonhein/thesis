@@ -32,10 +32,10 @@ public class Demo {
                 Cluster cluster = Cluster.get(context.getSystem());
 
                 if (cluster.selfMember().hasRole("executor")) {
-                    context.spawn(ExecutionProvider.create(), "Executor");
+                    context.spawn(NodeExecutor.create(), "Executor");
                 }
                 if (cluster.selfMember().hasRole("globalOptimizer")) {
-                    context.spawn(AgoraExecutor.create(), "AgoraExecutor");
+                    context.spawn(ExecutionManager.create(), "ExecutionManager");
                 }
 
                 return Behaviors.empty();
