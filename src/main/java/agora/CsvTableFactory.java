@@ -17,19 +17,70 @@ public class CsvTableFactory
     public static void main(String[] args){
         int numCrimes = 100000;
         int numCriminals = 70000;
+        String folder = "/data/Joscha/tables/";
+
+        TreeMap<Integer, Land> landProbability = new TreeMap<>();
+        landProbability.put(17925570, Land.NORD_RHEIN_WESTFALEN);
+        landProbability.put(31065753, Land.BAYERN);
+        landProbability.put(42168796, Land.BADEN_WÜRTEMBERG);
+        landProbability.put(50172217, Land.NIEDERSACHSEN);
+        landProbability.put(56465371, Land.HESSEN);
+        landProbability.put(60563762, Land.RHEINLAND_PFALZ);
+        landProbability.put(64620703, Land.SACHSEN_ANHALT);
+        landProbability.put(68284791, Land.BERLIN);
+        landProbability.put(71195666, Land.SCHLESWIG_HOLSTEIN);
+        landProbability.put(73726737, Land.BRANDENBURG);
+        landProbability.put(75907421, Land.SACHSEN);
+        landProbability.put(78027658, Land.THÜRINGEN);
+        landProbability.put(79880136, Land.HAMBURG);
+        landProbability.put(81490910, Land.MECKLENBURG_VORPOMMERN);
+        landProbability.put(82474901, Land.SAARLAND);
+        landProbability.put(83155031, Land.BREMEN);
+
 
         // 10-7 ratio of crime to criminals
-        createCimeTable(numCrimes, numCriminals);
-        createCriminalTable(numCriminals, numCrimes);
+        createCimeTable(numCrimes, numCriminals, landProbability, folder);
+        createCriminalTable(numCriminals, numCrimes, landProbability, folder);
+        createVaccineDataTable(120000000, landProbability, folder);
     }
 
-    private static void createCimeTable(int numCrimes, int numCriminals){
+    private static void createVaccineDataTable(int numRows, TreeMap<Integer, Land> landProbability, String folder){
         try {
-        String filename = "src/main/resources/tables/crime.csv";
+            String filename = folder+"vaccine_data.csv";
+            File file = new File(filename);
+            file.createNewFile();
+            final Random RANDOM = new Random();
+            PrimitiveIterator.OfLong longs = RANDOM.longs(1609431773893l, 1637770973940l).iterator(); // Date between 2020-01-01 and 2020-11-24 as long
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            FileWriter fileWriter = new FileWriter(file);
+            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+            // header
+            bufferedWriter.write("batch_number;shot_number;date;dummy_data;bundesland\n");
+
+            for (int i = 0; i < numRows; i++) {
+                int caseNumber = i;
+                Land land = landProbability.ceilingEntry(RANDOM.nextInt(83155031)).getValue();
+                Long dateAsLong = longs.next();
+                Instant instance = java.time.Instant.ofEpochMilli(dateAsLong);
+                final LocalDateTime localDateTime = LocalDateTime.ofInstant(instance, ZoneId.systemDefault());
+                final String formattedDate = localDateTime.format(formatter);
+                String details = "Lirum Larium Ipsum";
+                int shotnumber = RANDOM.nextInt(2) + 1;
+                bufferedWriter.write("batch"+caseNumber+";"+shotnumber+";"+formattedDate+";"+details+";"+land+"\n");
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void createCimeTable(int numCrimes, int numCriminals, TreeMap<Integer, Land> landProbability, String folder){
+        try {
+        String filename = folder+"crime.csv";
         File file = new File(filename);
         file.createNewFile();
         final Random RANDOM = new Random();
-        PrimitiveIterator.OfLong longs = RANDOM.longs(1609431773893l, 1637770973940l).iterator(); // Date between 2021-01-01 and 2020-11-24 as long
+        PrimitiveIterator.OfLong longs = RANDOM.longs(1609431773893l, 1637770973940l).iterator(); // Date between 2020-01-01 and 2020-11-24 as long
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         FileWriter fileWriter = new FileWriter(file);
         BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
@@ -38,7 +89,7 @@ public class CsvTableFactory
 
         for (int i = 0; i < numCrimes; i++) {
             int caseNumber = i;
-            Land land = Land.randomLand();
+            Land land = landProbability.ceilingEntry(RANDOM.nextInt(83155031)).getValue();
             CrimeCategory category = CrimeCategory.randomCategory();
             Long dateAsLong = longs.next();
             Instant instance = java.time.Instant.ofEpochMilli(dateAsLong);
@@ -55,9 +106,9 @@ public class CsvTableFactory
         }
     }
 
-    private static void createCriminalTable(int numCriminals, int numCrimes){
+    private static void createCriminalTable(int numCriminals, int numCrimes, TreeMap<Integer, Land> landProbability, String folder){
         try {
-            String filename = "src/main/resources/tables/criminals.csv";
+            String filename = folder+"criminals.csv";
             File file = new File(filename);
             file.createNewFile();
             final Random RANDOM = new Random();
