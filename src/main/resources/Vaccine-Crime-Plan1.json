@@ -7,7 +7,6 @@
       "location": "Berlin",
       "execution-engine": "postgres",
       "executor-actorRef": "akka://sys@hostA:2552/user/executor",
-      "hostname":  "postgres",
       "local-execution-plan": [
         {
           "id": 0,
@@ -31,11 +30,13 @@
               "continous": "false",
               "direction": "pull",
               "type": "remoteView",
+              "remote-execution-engine": "mariadb",
+              "workload-id": 1,
+              "local-execution-plan-index": 0,
               "view": {
                 "remote-view-name": "temp_view_123_1_0",
                 "local-new-name": "remote_view_123_1_0",
-                "workload-id": 1,
-                "local-execution-plan-index": 0,
+                "database": "mdb",
                 "columnTypes": [
                   "VARCHAR",
                   "INTEGER",
@@ -47,7 +48,21 @@
           "output": [
             {
               "type": "file",
-              "path": "/tmp/q_123.csv"
+              "path": "/tmp/q_123.csv",
+              "columnTypes": [
+                "VARCHAR",
+                "INTEGER",
+                "INTEGER",
+                "INTEGER",
+                "INTEGER"
+              ],
+              "columNames": [
+                "bundesland",
+                "population",
+                "pop_vaccinated",
+                "criminals_vaccinated",
+                "criminals_total"
+              ]
             }
           ],
           "operators": [
@@ -77,28 +92,23 @@
               "output": [
                 {
                   "type": "field",
-                  "fieldOrdinal": 0,
-                  "name": "bundesland"
+                  "fieldOrdinal": 0
                 },
                 {
                   "type": "field",
-                  "fieldOrdinal": 1,
-                  "name": "population"
+                  "fieldOrdinal": 1
                 },
                 {
                   "type": "field",
-                  "fieldOrdinal": 3,
-                  "name": "pop_vaccinated"
+                  "fieldOrdinal": 3
                 },
                 {
                   "type": "field",
-                  "fieldOrdinal": 5,
-                  "name": "criminals_vaccinated"
+                  "fieldOrdinal": 5
                 },
                 {
                   "type": "field",
-                  "fieldOrdinal": 6,
-                  "name": "criminals_total"
+                  "fieldOrdinal": 6
                 }
               ]
             },
@@ -374,11 +384,13 @@
               "continous": "false",
               "direction": "pull",
               "type": "remoteView",
+              "remote-execution-engine": "mariadb",
+              "workload-id": 2,
+              "local-execution-plan-index": 0,
               "view": {
                 "remote-view-name": "temp_view_123_2_0",
                 "local-new-name": "remote_view_123_2_0",
-                "workload-id": 2,
-                "local-execution-plan-index": 0,
+                "database": "mdb",
                 "columnTypes": [
                   "INTEGER",
                   "INTEGER"

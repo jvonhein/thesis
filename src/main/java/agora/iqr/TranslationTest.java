@@ -50,8 +50,8 @@ public class TranslationTest {
                     .add("vaccine_status", SqlTypeName.INTEGER)
                     .build();
         });
-        vaccineCrimeSchema.getTableMap().put("TempExternalInput0", remote1);
-        vaccineCrimeSchema.getTableMap().put("remoteView1230", remote2);
+        vaccineCrimeSchema.getTableMap().put("remote_view_123_1_0", remote1);
+        vaccineCrimeSchema.getTableMap().put("remote_view_123_2_0", remote2);
 
 
         final SchemaPlus rootSchema = Frameworks.createRootSchema(true).add("vaccine_crime", vaccineCrimeSchema);

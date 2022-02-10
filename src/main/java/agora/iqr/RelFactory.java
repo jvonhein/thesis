@@ -13,26 +13,27 @@ import org.apache.calcite.tools.RelBuilder;
 
 public class RelFactory {
 
+    @Deprecated
     public static RelNode translateJson(String json, String executorActorRef, RelBuilder relBuilder) throws Exception {
 
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(json);
 
         // find the correct query in the iqr-json
-        final JsonNode subplans = node.path("subplans");
-        for (JsonNode subplan: subplans){
+        final JsonNode workloads = node.path("workload");
+        for (JsonNode workload: workloads){
             // found the subplan of this executor
-            if (subplan.path("executor-actorRef").asText().equals(executorActorRef)){
-                final JsonNode query = subplan.path("query");
+            if (workload.path("executor-actorRef").asText().equals(executorActorRef)){
+                final JsonNode operators = workload.path("local-execution-plan").get(0).get("operators");
 
-                return buildRelNodeRecursively(query, 0, relBuilder);
+                return buildRelNodeRecursively(operators, 0, relBuilder);
             }
         }
 
         return null;
     }
 
-    private static RelNode buildRelNodeRecursively(JsonNode query, int index, RelBuilder relBuilder) throws Exception {
+    public static RelNode buildRelNodeRecursively(JsonNode query, int index, RelBuilder relBuilder) throws Exception {
         relBuilder.clear();
 
         JsonNode jsonOperator = query.get(index);

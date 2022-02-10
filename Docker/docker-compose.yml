@@ -58,7 +58,7 @@ services:
 #          JDBC_URL: "jdbc:postgresql://postgres:5432/db1"
 #          JDBC_USER: odbc_user
 #          JDBC_PW: password
-#          NAME: postgres
+#          EEHOSTNAME: postgres
 #
 #    ne2:
 #        image: node_executor
@@ -74,7 +74,7 @@ services:
 #          JDBC_URL: "jdbc:mariadb://mdb1:3006/mdb"
 #          JDBC_USER: mariadb
 #          JDBC_PW: 123456
-#          NAME: mdb1
+#          EEHOSTNAME: mdb_crime
 #
 #    ne3:
 #        image: node_executor
@@ -90,4 +90,4 @@ services:
 #          JDBC_URL: "jdbc:mariadb://mdb1:3006/mdb"
 #          JDBC_USER: mariadb
 #          JDBC_PW: 123456
-#          NAME: mdb2
+#          EEHOSTNAME: mdb_criminals
