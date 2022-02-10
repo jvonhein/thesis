@@ -8,6 +8,7 @@ import org.apache.calcite.schema.impl.AbstractSchema;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class TestSchema extends AbstractSchema {
@@ -84,7 +85,35 @@ public class TestSchema extends AbstractSchema {
         this.tableMap = tableMap;
     }
 
-    public TestSchema addTableFromJsonNode(JsonNode node){
+    public TestSchema addTableFromColumns(JsonNode columns, String tableName) {
+
+        final TestTable newTable = new TestTable(relDataTypeFactory -> {
+            RelDataTypeFactory.Builder builder = new RelDataTypeFactory.Builder(relDataTypeFactory);
+            int numColumns = columns.size();
+            for (int i = 0; i < numColumns; i++) {
+                String columnType = columns.get(i).asText();
+                switch (columnType){
+                    case "VARCHAR":
+                        builder.add("varchar_"+i, SqlTypeName.VARCHAR);
+                        break;
+                    case "INTEGER":
+                        builder.add("integer_"+i, SqlTypeName.INTEGER);
+                        break;
+                    case "DATE":
+                        builder.add("date"+i, SqlTypeName.DATE);
+                        break;
+                    case "DOUBLE":
+                        builder.add("double"+i, SqlTypeName.DOUBLE);
+                        break;
+                    default:
+                        System.out.println("column Type not identified - not added to Schema!!!");
+                        break;
+                }
+            }
+            return builder.build();
+        });
+
+        tableMap.put(tableName, newTable);
         return this;
     }
 

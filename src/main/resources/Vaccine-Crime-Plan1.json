@@ -7,6 +7,7 @@
       "location": "Berlin",
       "execution-engine": "postgres",
       "executor-actorRef": "akka://sys@hostA:2552/user/executor",
+      "hostname":  "postgres",
       "local-execution-plan": [
         {
           "id": 0,
@@ -34,7 +35,12 @@
                 "remote-view-name": "temp_view_123_1_0",
                 "local-new-name": "remote_view_123_1_0",
                 "workload-id": 1,
-                "local-execution-plan-index": 0
+                "local-execution-plan-index": 0,
+                "columnTypes": [
+                  "VARCHAR",
+                  "INTEGER",
+                  "INTEGER"
+                ]
               }
             }
           ],
@@ -372,7 +378,11 @@
                 "remote-view-name": "temp_view_123_2_0",
                 "local-new-name": "remote_view_123_2_0",
                 "workload-id": 2,
-                "local-execution-plan-index": 0
+                "local-execution-plan-index": 0,
+                "columnTypes": [
+                  "INTEGER",
+                  "INTEGER"
+                ]
               }
             }
           ],
@@ -593,7 +603,7 @@
                     {
                       "type": "literal",
                       "dataType": "String",
-                      "value": "bodily_harm"
+                      "value": "KÖRPERVERLETZUNG"
                     }
                   ]
                 }
