@@ -21,16 +21,19 @@ RUN apt-get update \
         openjdk-8-jdk \
     && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/CartoDB/odbc_fdw.git && cd odbc_fdw && make && make install
+COPY tables/country_stats.csv /tables/
+COPY init.sql /
 
+RUN git clone https://github.com/CartoDB/odbc_fdw.git && cd odbc_fdw && make && make install
 RUN git clone https://github.com/MariaDB/mariadb-connector-odbc.git
 RUN mkdir build && cd build && cmake ../mariadb-connector-odbc/ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCONC_WITH_UNIT_TESTS=Off -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SSL=OPENSSL \
     && cmake --build . --config RelWithDebInfo \
-    && make install
+    && make install \
+    && cd /
 
-COPY config/ /
-RUN cat config/mariadbDriver.ini >> /etc/odbcinst.ini &&\
-    cat config/dataSources.ini >> /etc/odbc.ini
+COPY config /config 
+RUN cat /config/mariadb_driver.ini >> /etc/odbcinst.ini &&\
+    cat /config/data_sources.ini >> /etc/odbc.ini
 
 #RUN curl -O https://downloads.cloudera.com/connectors/hive_odbc_2.6.1.1001/Linux/ClouderaHiveODBC-2.6.1.1001-1.x86_64.rpm
 #RUN alien -i ClouderaHiveODBC-2.6.1.1001-1.x86_64.rpm
@@ -42,9 +45,8 @@ RUN git clone https://github.com/atris/JDBC_FDW.git \
  && cd JDBC_FDW \
  && make install USE_PGXS=1
 
-COPY tables/health.csv /tables/
+#COPY tables/health.csv /tables/
 # loads table health and creates odbc_user with password 'password'
-COPY init.sql /
 
 USER postgres
 
@@ -76,6 +78,6 @@ EXPOSE 5432
 #COPY import/import_tpch.sh /import_tpch.sh
 #COPY import/create_indexes.sh /create_indexes.sh
 
-#VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
+VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"] 
 
 CMD ["/usr/lib/postgresql/12/bin/postgres", "-D", "/var/lib/postgresql/12/main", "-c", "config_file=/etc/postgresql/12/main/postgresql.conf"]
