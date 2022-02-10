@@ -1,0 +1,3 @@
+FROM centos
+
+VOLUME /dockerfilevolume
