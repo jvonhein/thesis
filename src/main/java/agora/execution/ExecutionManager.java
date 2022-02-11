@@ -5,15 +5,18 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
 import akka.actor.typed.receptionist.Receptionist;
 import akka.cluster.typed.Cluster;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import scala.collection.Iterator;
 import scala.collection.immutable.Set;
 
 /**
  * Global Optimizer
  * Should be a Singleton Actor and entry point for user queries.
- * Needs to be subscribed to ClusterEvents and keep tabs on all available execution engines & assets within the Agora Ecosystem.
  *
- * Should spawn a separate Actor per user query
+ *
+ * Is completely mocked up. Will send the initial iqr (given by constructor) to the node-executor once he has received his ActorRef from the Receptionist
  */
 public class ExecutionManager extends AbstractBehavior<ExecutionManager.Query> {
 
@@ -36,38 +39,47 @@ public class ExecutionManager extends AbstractBehavior<ExecutionManager.Query> {
     // State
     private final ActorContext<Query> context;
     private final ActorRef<Receptionist.Listing> listingResponseAdapter;
+    String nodeExecutorActorPath;
+    String iqr;
     // Set of LocalExecutors in the System
     // Map of Assets to LocalExecutors (in order to be able be able to perform the Optimization process and map operations to localExecutors)
 
 
     // Create & Constructor
-    private ExecutionManager(ActorContext<ExecutionManager.Query> context) {
+    private ExecutionManager(ActorContext<ExecutionManager.Query> context, String iqr) {
         super(context);
         this.context = context;
         this.listingResponseAdapter = context.messageAdapter(Receptionist.Listing.class, ListingResponse::new);
-        Cluster cluster = Cluster.get(context.getSystem());
+        this.iqr = iqr;
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = null;
+        try {
+            node = mapper.readTree(iqr);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        nodeExecutorActorPath = node.get("workload").get(0).path("executor-actorRef").asText();
 
         context.getSystem()
                 .receptionist()
                 .tell(Receptionist.subscribe(NodeExecutor.localExecutorServiceKey, listingResponseAdapter));
     }
 
-    public static Behavior<Query> create() {
-        return Behaviors.setup(ExecutionManager::new);
+    public static Behavior<Query> create(String iqr) {
+        return Behaviors.setup(context -> new ExecutionManager(context, iqr));
     }
 
-    // Behavior
-    private Behavior<Query> onQuery(Query msg){
-        context.getLog().info("Message received");
-        return this;
-    }
 
     private Behavior<Query> onListingResponse(ListingResponse msg){
         context.getLog().info("\n\nListing Response received:\n");
         final Set<ActorRef<NodeExecutor.ExecutorMessage>> actorRefSet = msg.listing.allServiceInstances(NodeExecutor.localExecutorServiceKey);
         final Iterator<ActorRef<NodeExecutor.ExecutorMessage>> iterator = actorRefSet.iterator();
         while (iterator.hasNext()){
-            context.getLog().info("{}", iterator.next().toString());
+            final ActorRef<NodeExecutor.ExecutorMessage> nodeExecutor = iterator.next();
+            if (nodeExecutor.path().equals(nodeExecutorActorPath)){
+                nodeExecutor.tell(new NodeExecutor.AgoraQuery(iqr, null));
+            }
+            context.getLog().info("{}", nodeExecutor.toString());
         }
         context.getLog().info("\n\n");
         return this;

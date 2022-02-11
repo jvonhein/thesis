@@ -69,6 +69,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
         }
     }
 
+    // State
     private Connection conn; // jdbc connection to execution engine / database
     private final ExecutionEngine engine;
     String hostname=System.getenv("EEHOSTNAME");
@@ -106,9 +107,6 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
         return Behaviors.setup(context -> new QueryActor(id, context, nodeExecutors, iqr, conn, engine, queryActorRefs, nodeExecutorActorRef));
     }
 
-    public static Behavior<QueryMessage> create(int id, TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> nodeExecutors, String iqr, Connection conn, ExecutionEngine engine, ActorRef<NodeExecutor.ExecutorMessage> nodeExecutorActorRef){
-        return Behaviors.setup(context -> new QueryActor(id, context, nodeExecutors, iqr, conn, engine, null, nodeExecutorActorRef));
-    }
 
     private void processIqr(String iqr, TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> registeredNodeExecutors) throws JsonProcessingException {
 
@@ -248,6 +246,30 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
 
     }
 
+    private Behavior<QueryMessage> onRemoteSucessMessage(RemoteExecutionFinished msg){
+
+        int unfinishedLocalExecutionPlans = requirements.length;
+
+        for (int i = 0; i < requirements.length; i++) {
+            requirements[i].removeIf(requirement -> (requirement.workloadId==msg.workloadId) && (requirement.localExecutionPlanIndex==msg.localExecutionPlanIndex));
+            if (requirements[i].isEmpty()){
+                executePlan(workload.get("local-execution-plan").get(i));
+                unfinishedLocalExecutionPlans -=1;
+            }
+        }
+        // job finished -> shut down
+        if (unfinishedLocalExecutionPlans==0){
+            try {
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return Behaviors.stopped();
+        }
+
+        return this;
+    }
+
     private String getColumn(int i, String[] columnTypes, ResultSet rs) throws SQLException {
         String result = "";
         switch (columnTypes[i]){
@@ -320,6 +342,8 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
 
     @Override
     public Receive<QueryMessage> createReceive() {
-        return null;
+        return newReceiveBuilder()
+                .onMessage(RemoteExecutionFinished.class, this::onRemoteSucessMessage)
+                .build();
     }
 }

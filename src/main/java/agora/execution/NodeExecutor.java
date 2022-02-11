@@ -43,12 +43,12 @@ public class NodeExecutor extends AbstractBehavior<NodeExecutor.ExecutorMessage>
 
     public static class AgoraQuery implements ExecutorMessage, JsonSerializable {
         final public String iqr;
-        final public ActorRef sender;
+        final public ActorRef<QueryActor.QueryMessage>[] queryActorRefsByWorkload;
 
         @JsonCreator
-        public AgoraQuery(String iqr, ActorRef sender) {
+        public AgoraQuery(String iqr, ActorRef<QueryActor.QueryMessage>[] queryActorRefsByWorkload) {
             this.iqr = iqr;
-            this.sender = sender;
+            this.queryActorRefsByWorkload = queryActorRefsByWorkload;
         }
     }
 
@@ -69,23 +69,26 @@ public class NodeExecutor extends AbstractBehavior<NodeExecutor.ExecutorMessage>
     // State
     private final ActorRef<Receptionist.Listing> listingResponseAdapter;
     private TreeSet<ActorRef<ExecutorMessage>> registeredNodeExecutors = new TreeSet<>();
-    private final String jdbcUrl = System.getenv("JDBC_URL");
-    private final String jdbcUser = System.getenv("JDBC_USER");
-    private final String jdbcPw = System.getenv("JDBC_PW");
-    private final ExecutionEngine engine = getEngine(System.getenv("ENGINE"));
+    private final String jdbcUrl;
+    private final String jdbcUser;
+    private final String jdbcPw;
+    private final ExecutionEngine engine;
     private HashMap<Integer, ActorRef<QueryActor.QueryMessage>> currentQueries = new HashMap<>();
 
-    private NodeExecutor(ActorContext<ExecutorMessage> context) {
+    private NodeExecutor(ActorContext<ExecutorMessage> context, String jdbcUrl, String jdbcUser, String jdbcPw, ExecutionEngine engine) {
         super(context);
+        this.jdbcUser = jdbcUser;
+        this.jdbcUrl = jdbcUrl;
+        this.jdbcPw = jdbcPw;
+        this.engine = engine;
         this.listingResponseAdapter = context.messageAdapter(Receptionist.Listing.class, ListingResponse::new);
-        Cluster cluster = Cluster.get(context.getSystem());
 
         context.getSystem().receptionist().tell(
                 Receptionist.subscribe(localExecutorServiceKey, listingResponseAdapter)
         );
     }
 
-    public static Behavior<ExecutorMessage> create(){
+    public static Behavior<ExecutorMessage> create(String jdbcUrl, String jdbcUser, String jdbcPw, ExecutionEngine engine){
         return Behaviors.setup(
                 context -> {
                     context.getSystem()
@@ -93,7 +96,7 @@ public class NodeExecutor extends AbstractBehavior<NodeExecutor.ExecutorMessage>
                             .tell(Receptionist.register(localExecutorServiceKey, context.getSelf()));
 
 
-                    return new NodeExecutor(context);
+                    return new NodeExecutor(context, jdbcUrl, jdbcUser, jdbcPw, engine);
         });
     }
 
@@ -104,11 +107,20 @@ public class NodeExecutor extends AbstractBehavior<NodeExecutor.ExecutorMessage>
             int id = node.get("id").asInt();
             Connection conn = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
             String name = "query_"+id;
-            ActorRef<QueryActor.QueryMessage> query = getContext().spawn(QueryActor.create(id, registeredNodeExecutors, msg.iqr, conn, engine, getContext().getSelf()), name);
-            currentQueries.put(id, query);
+            if(!currentQueries.containsKey(id))
+            {
+                ActorRef<QueryActor.QueryMessage> query = getContext().spawn(QueryActor.create(id, registeredNodeExecutors, msg.iqr, conn, engine, msg.queryActorRefsByWorkload, getContext().getSelf()), name);
+                currentQueries.put(id, query);
+            }
+
         } catch (Exception e){
             e.printStackTrace();
         }
+        return this;
+    }
+
+    private Behavior<ExecutorMessage> forwardQueryMessage (QueryActor.RemoteExecutionFinished msg){
+        currentQueries.get(msg.queryId).tell(msg);
         return this;
     }
 
@@ -121,16 +133,12 @@ public class NodeExecutor extends AbstractBehavior<NodeExecutor.ExecutorMessage>
         return this;
     }
 
-    private ExecutionEngine getEngine(String s){
-        switch (s){
-            case "postgres": return ExecutionEngine.POSTGRES;
-            case "mariadb": return ExecutionEngine.MARIADB;
-            default: return null;
-        }
-    }
-
     @Override
     public Receive<ExecutorMessage> createReceive() {
-        return null;
+        return newReceiveBuilder()
+                .onMessage(AgoraQuery.class, this::receiveIQR)
+                .onMessage(QueryActor.RemoteExecutionFinished.class, this::forwardQueryMessage)
+                .onMessage(ListingResponse.class, listingResponse -> this.onListing(listingResponse.listing))
+                .build();
     }
 }
