@@ -404,15 +404,19 @@
               "name": "temp_view_123_1_0"
             }
           ],
-          "on-success": {
-            "message": {
-              "to": 0,
-              "status": "success",
-              "workload-id": 1,
-              "local-execution-plan-index": 0,
-              "view-name": "temp_view_123_1_0"
+          "on-success": [
+            {
+              "message": {
+                "to": 0,
+                "status": "success",
+                "content": [
+                  "workload-id",
+                  "local-execution-plan-index",
+                  "ee-credentials"
+                ]
+              }
             }
-          },
+          ],
           "operators": [
             {
               "id": 0,
@@ -681,15 +685,19 @@
             "requirements": []
           },
           "failure-strategy": "none",
-          "on-success": {
-            "message": {
-              "to": 1,
-              "status": "success",
-              "workload-id": 2,
-              "local-execution-plan-index": 0,
-              "view-name": "temp_view_123_2_0"
+          "on-success": [
+            {
+              "message": {
+                "to": 1,
+                "status": "success",
+                "content": [
+                  "workload-id",
+                  "local-execution-plan-index",
+                  "ee-credentials"
+                ]
+              }
             }
-          },
+          ],
           "input": [],
           "output": [
             {

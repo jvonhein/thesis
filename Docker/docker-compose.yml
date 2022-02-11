@@ -59,6 +59,7 @@ services:
 #          JDBC_USER: odbc_user
 #          JDBC_PW: password
 #          EEHOSTNAME: postgres
+#          ENGINE: postgres
 #
 #    ne2:
 #        image: node_executor
@@ -75,6 +76,7 @@ services:
 #          JDBC_USER: mariadb
 #          JDBC_PW: 123456
 #          EEHOSTNAME: mdb_crime
+#          ENGINE: mariadb
 #
 #    ne3:
 #        image: node_executor
@@ -91,3 +93,4 @@ services:
 #          JDBC_USER: mariadb
 #          JDBC_PW: 123456
 #          EEHOSTNAME: mdb_criminals
+#          ENGINE: mariadb

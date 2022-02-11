@@ -14,9 +14,13 @@ import akka.actor.typed.receptionist.ServiceKey;
 import akka.cluster.typed.Cluster;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.JsonNode;
-import scala.collection.immutable.HashSet;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import scala.collection.immutable.Set;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.TreeSet;
 
 /**
@@ -65,12 +69,11 @@ public class NodeExecutor extends AbstractBehavior<NodeExecutor.ExecutorMessage>
     // State
     private final ActorRef<Receptionist.Listing> listingResponseAdapter;
     private TreeSet<ActorRef<ExecutorMessage>> registeredNodeExecutors = new TreeSet<>();
-    private String currentQuery;
     private final String jdbcUrl = System.getenv("JDBC_URL");
     private final String jdbcUser = System.getenv("JDBC_USER");
     private final String jdbcPw = System.getenv("JDBC_PW");
-    private final TestSchema vaccineCrimeSchema = new TestSchema(); // schema of the local execution engine
-
+    private final ExecutionEngine engine = getEngine(System.getenv("ENGINE"));
+    private HashMap<Integer, ActorRef<QueryActor.QueryMessage>> currentQueries = new HashMap<>();
 
     private NodeExecutor(ActorContext<ExecutorMessage> context) {
         super(context);
@@ -95,6 +98,17 @@ public class NodeExecutor extends AbstractBehavior<NodeExecutor.ExecutorMessage>
     }
 
     private Behavior<ExecutorMessage> receiveIQR(AgoraQuery msg){
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode node = mapper.readTree(msg.iqr);
+            int id = node.get("id").asInt();
+            Connection conn = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
+            String name = "query_"+id;
+            ActorRef<QueryActor.QueryMessage> query = getContext().spawn(QueryActor.create(id, registeredNodeExecutors, msg.iqr, conn, engine, getContext().getSelf()), name);
+            currentQueries.put(id, query);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
         return this;
     }
 
@@ -105,6 +119,14 @@ public class NodeExecutor extends AbstractBehavior<NodeExecutor.ExecutorMessage>
         if (newRegisteredNodeExecutors.size() > 0)
             getContext().getLog().info("new listing received. all current registered nodeExecutors: {}", this.registeredNodeExecutors);
         return this;
+    }
+
+    private ExecutionEngine getEngine(String s){
+        switch (s){
+            case "postgres": return ExecutionEngine.POSTGRES;
+            case "mariadb": return ExecutionEngine.MARIADB;
+            default: return null;
+        }
     }
 
     @Override

@@ -4,6 +4,7 @@ import agora.JsonSerializable;
 import agora.iqr.RelFactory;
 import agora.iqr.TestSchema;
 import akka.actor.Status;
+import akka.actor.Status.Success;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -40,15 +41,15 @@ import java.util.*;
 public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
     public interface QueryMessage{}
 
-    public static class RemoteExecutionFinished implements QueryMessage, JsonSerializable {
-        public final Status status;
+    public static class RemoteExecutionFinished implements QueryMessage, NodeExecutor.ExecutorMessage, JsonSerializable {
+        public final String status;
         public final int queryId;
         public final int workloadId;
         public final int localExecutionPlanIndex;
         public final ActorRef<QueryMessage> senderQueryActor;
         public String hostname;
 
-        public RemoteExecutionFinished(Status status, int queryId, int workloadId, int localExecutionPlanIndex, ActorRef<QueryMessage> senderQueryActor, String hostname) {
+        public RemoteExecutionFinished(String status, int queryId, int workloadId, int localExecutionPlanIndex, ActorRef<QueryMessage> senderQueryActor, String hostname) {
             this.status = status;
             this.queryId = queryId;
             this.workloadId = workloadId;
@@ -68,62 +69,83 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
         }
     }
 
-    private final TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> registeredNodeExecutors;
-    private final String iqr;
     private Connection conn; // jdbc connection to execution engine / database
     private final ExecutionEngine engine;
-    private final HashMap<Integer, ActorRef<QueryMessage>> workloadIdToQueryActorMap; // Utility Map to be able to send message to other QueryActors directly (without going through NodeExecutor actor first)
+    String hostname=System.getenv("EEHOSTNAME");
     private final ActorRef<NodeExecutor.ExecutorMessage> nodeExecutorActorRef; // need to know which node Executor this Query belongs to
     private TestSchema schema = new TestSchema();
     private int workloadId = -1;
     private JsonNode workload;
-    private HashMap<Integer, Requirement> requirements; //<this.localEcecutionPlanIndex, Requirement>
-    private HashMap<Integer, String> workloadToHostnameMap = new HashMap<>();
-    String hostname=System.getenv("EEHOSTNAME");
+    private final int queryID;
+
+    ArrayList<Requirement>[] requirements;
+    String[] hostnamesByWorkload;
+    ActorRef<NodeExecutor.ExecutorMessage>[] nodeExecutorsByWorkload;
+    private ActorRef<QueryMessage>[] queryActorRefsByWorkload;
 
 
-    private QueryActor(ActorContext<QueryMessage> context, TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> registeredNodeExecutors, String iqr, Connection conn, ExecutionEngine engine, HashMap<Integer, ActorRef<QueryMessage>> workloadIdToQueryActorMap, ActorRef<NodeExecutor.ExecutorMessage> nodeExecutorActorRef) {
+
+    private QueryActor(int id, ActorContext<QueryMessage> context, TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> registeredNodeExecutors, String iqr, Connection conn, ExecutionEngine engine,
+                       ActorRef<QueryMessage>[] queryActorRefs, ActorRef<NodeExecutor.ExecutorMessage> nodeExecutorActorRef) {
         super(context);
-        this.registeredNodeExecutors = registeredNodeExecutors;
-        this.iqr = iqr;
         this.conn = conn;
         this.engine = engine;
-        this.workloadIdToQueryActorMap = workloadIdToQueryActorMap;
+        this.queryActorRefsByWorkload = queryActorRefs;
         this.nodeExecutorActorRef = nodeExecutorActorRef;
+        this.queryID = id;
+
+        try {
+            processIqr(iqr, registeredNodeExecutors);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 
-    public static Behavior<QueryMessage> create(TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> nodeExecutors, String iqr, Connection conn, ExecutionEngine engine, HashMap<Integer, ActorRef<QueryMessage>> workloadIdToQueryActorMap, ActorRef<NodeExecutor.ExecutorMessage> nodeExecutorActorRef){
-        return Behaviors.setup(context -> new QueryActor(context, nodeExecutors, iqr, conn, engine, workloadIdToQueryActorMap, nodeExecutorActorRef));
+    public static Behavior<QueryMessage> create(int id, TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> nodeExecutors, String iqr, Connection conn, ExecutionEngine engine,
+                                                ActorRef<QueryMessage>[] queryActorRefs, ActorRef<NodeExecutor.ExecutorMessage> nodeExecutorActorRef){
+        return Behaviors.setup(context -> new QueryActor(id, context, nodeExecutors, iqr, conn, engine, queryActorRefs, nodeExecutorActorRef));
     }
 
-    private void processIqr() throws JsonProcessingException {
+    public static Behavior<QueryMessage> create(int id, TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> nodeExecutors, String iqr, Connection conn, ExecutionEngine engine, ActorRef<NodeExecutor.ExecutorMessage> nodeExecutorActorRef){
+        return Behaviors.setup(context -> new QueryActor(id, context, nodeExecutors, iqr, conn, engine, null, nodeExecutorActorRef));
+    }
+
+    private void processIqr(String iqr, TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> registeredNodeExecutors) throws JsonProcessingException {
 
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(iqr);
         int numWorkloads = node.get("workload").size();
+        hostnamesByWorkload = new String[numWorkloads];
+        String[] executorActorPathsByWorkload = new String[numWorkloads];
+        nodeExecutorsByWorkload = new ActorRef[numWorkloads];
+        if (queryActorRefsByWorkload==null)
+            queryActorRefsByWorkload = new ActorRef[numWorkloads];
         // find workload this query is responsible for
         for (int i = 0; i < numWorkloads; i++) {
+            executorActorPathsByWorkload[i] = node.get("workload").get(i).get("executor-actorRef").asText();
             if (node.get("workload").get(i).get("executor-actorRef").asText().equals(nodeExecutorActorRef)){
                 this.workload = node.get("workload").get(i);
                 this.workloadId = workload.get("id").asInt();
+                hostnamesByWorkload[i] = hostname;
+                queryActorRefsByWorkload[i]=getContext().getSelf();
             }
         }
+        nodeExecutorsByWorkload = findActorRefsByPath(executorActorPathsByWorkload, registeredNodeExecutors);
         if (workloadId==-1){
             getContext().getLog().error("QueryActor received IQR with no workload for it's Node Executor");
         }else {
-            Iterator<JsonNode> executionPlanIterator = workload.get("local-execution-plan").elements();
-            HashSet<Integer> requirementWorkloadIds = new HashSet<>();
-            while (executionPlanIterator.hasNext()){
-                JsonNode localExecutionPlan = executionPlanIterator.next();
-
+            int numLocalExecutionPlans = workload.get("local-execution-plan").size();
+            requirements = new ArrayList[numLocalExecutionPlans];
+            for (int i = 0; i < numLocalExecutionPlans; i++) {
+                JsonNode localExecutionPlan = workload.get("local-execution-plan").get(i);
+                requirements[i]=new ArrayList<>();
                 // check requirements
                 if (localExecutionPlan.has("start-condition") && localExecutionPlan.get("start-condition").has("requirements")){
                     localExecutionPlan.get("start-condition").get("requirements").forEach(requirement -> {
                         int reqWorkloadId = requirement.get("message").get("workload-id").asInt();
                         int reqExIndex = requirement.get("message").get("local-execution-plan-index").asInt();
                         Requirement r = new Requirement(reqWorkloadId, reqExIndex);
-                        this.requirements.put(localExecutionPlan.get("id").asInt(), r);
-                        requirementWorkloadIds.add(reqWorkloadId);
+                        this.requirements[localExecutionPlan.get("id").asInt()].add(r);
                     });
                 } else {
                     // start query immediately
@@ -132,6 +154,8 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
             }
         }
     }
+
+
 
     private void executePlan(JsonNode localExecutionPlan){
 
@@ -208,6 +232,20 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
         }
 
         // possibly inform downstream NodeExecutors
+        if(localExecutionPlan.has("on-success") && localExecutionPlan.get("on-success").size() > 0){
+            localExecutionPlan.get("on-success").forEach(action -> {
+                if (action.has("message")){
+                    int to = action.get("message").get("to").asInt();
+                    RemoteExecutionFinished msg = new RemoteExecutionFinished("success", this.queryID, workloadId, localExecutionPlan.get("id").asInt(), getContext().getSelf(), hostname);
+                    if (queryActorRefsByWorkload[to] != null){
+                        queryActorRefsByWorkload[to].tell(msg);
+                    } else {
+                        nodeExecutorsByWorkload[to].tell(msg);
+                    }
+                }
+            });
+        }
+
     }
 
     private String getColumn(int i, String[] columnTypes, ResultSet rs) throws SQLException {
@@ -236,7 +274,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
                 schema.addTableFromColumns(view.get("columnTypes"), localNewName);
 
                 String remoteViewName = input.get("remote-view-name").asText();
-                String hostname = workloadToHostnameMap.get(view.get("workload-id").asInt());
+                String hostname = hostnamesByWorkload[view.get("workload-id").asInt()];
                 String database = view.get("database").asText();
                 String sqlStatement = "";
 
@@ -268,7 +306,17 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
         });
     }
 
-
+    // primitive brute force way to match the actor path with the respective ActorRef. Should probably be made more professional and efficient with Comparator of ActorRef by Path
+    private static ActorRef<NodeExecutor.ExecutorMessage>[] findActorRefsByPath(String[] actorPaths, TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> possibleRefs){
+        ActorRef<NodeExecutor.ExecutorMessage>[] result = new ActorRef[actorPaths.length];
+        for (int i = 0; i < actorPaths.length; i++) {
+            String path = actorPaths[i];
+            final Optional<ActorRef<NodeExecutor.ExecutorMessage>> match = possibleRefs.stream().filter(actorRef -> actorRef.path().equals(path)).findFirst();
+            if (match.isPresent())
+                result[i]=match.get();
+        }
+        return result;
+    }
 
     @Override
     public Receive<QueryMessage> createReceive() {
