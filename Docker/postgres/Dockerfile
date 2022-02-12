@@ -23,6 +23,7 @@ RUN apt-get update \
 
 COPY tables/country_stats.csv /tables/
 COPY init.sql /
+COPY vaccine_import.sql /
 
 RUN git clone https://github.com/CartoDB/odbc_fdw.git && cd odbc_fdw && make && make install
 RUN git clone https://github.com/MariaDB/mariadb-connector-odbc.git
@@ -35,18 +36,12 @@ COPY config /config
 RUN cat /config/mariadb_driver.ini >> /etc/odbcinst.ini &&\
     cat /config/data_sources.ini >> /etc/odbc.ini
 
-#RUN curl -O https://downloads.cloudera.com/connectors/hive_odbc_2.6.1.1001/Linux/ClouderaHiveODBC-2.6.1.1001-1.x86_64.rpm
-#RUN alien -i ClouderaHiveODBC-2.6.1.1001-1.x86_64.rpm
-#COPY config/hive.ini /
-#RUN cat hive.ini >> /etc/odbcinst.ini
 
 RUN ln -s /usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/libjvm.so /usr/lib/libjvm.so
 RUN git clone https://github.com/atris/JDBC_FDW.git \
  && cd JDBC_FDW \
  && make install USE_PGXS=1
 
-#COPY tables/health.csv /tables/
-# loads table health and creates odbc_user with password 'password'
 
 USER postgres
 
@@ -55,17 +50,7 @@ RUN    /etc/init.d/postgresql start &&\
     psql --command "ALTER USER postgres WITH PASSWORD '123456';" &&\
     createdb -O postgres db1 &&\
     psql -d db1 -f /init.sql
-#    psql -d db1 --command "CREATE TABLE health( \
-#        bundesland VARCHAR(255), \
-#        population_total INTEGER, \
-#        vaccinated_firstshot INTEGER, \
-#        vaccinated_secondshot INTEGER, \
-#        percent_vaccinated_firstshot NUMERIC(4,3), \
-#        percent_vaccinated_secondshot NUMERIC(4,3));" &&\
-#   psql -d db1 --command "COPY health(bundesland, population_total, vaccinated_firstshot, vaccinated_secondshot, percent_vaccinated_firstshot, percent_vaccinated_secondshot) \
-#        FROM '/tables/health.csv' \
-#        DELIMITER ';' \
-#        CSV HEADER;"
+
 
 RUN echo "host all  all    0.0.0.0/0  md5" >> /etc/postgresql/12/main/pg_hba.conf
 

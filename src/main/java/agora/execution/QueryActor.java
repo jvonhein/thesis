@@ -173,7 +173,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
         if (engine==ExecutionEngine.MARIADB){
             schemaName="mdb";
         } else if (engine==ExecutionEngine.POSTGRES){
-            schemaName="db1";
+            schemaName="public";
         }
         final SchemaPlus rootSchema = Frameworks.createRootSchema(true).add(schemaName, schema);
         final Frameworks.ConfigBuilder configBuilder = Frameworks.newConfigBuilder();
@@ -198,7 +198,8 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
             final RelNode root = RelFactory.buildRelNodeRecursively(localExecutionPlan.get("operators"), 0, relBuilder);
 
             final SqlNode sqlNode = relToSqlConverter.visitRoot(root).asStatement();
-            String sqlString = sqlNode.toString();
+            String sqlString = sqlNode.toSqlString(dialect).getSql();
+
             JsonNode output = localExecutionPlan.get("output").get(0); // for now assume only one output at all times
 
             // make sure the columns are named according to the iqr!
@@ -353,7 +354,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
                         break;
                     case POSTGRES:
                         sqlStatement = "IMPORT FOREIGN SCHEMA test FROM SERVER "+hostname+ "INTO PUBLIC OPTIONS (" +
-                                "odbc_DATABASE" + database + ", table '"+localNewName+"', sql_query 'select * from "+remoteViewName+"' );";
+                                "odbc_DATABASE '" + database + "', table '"+localNewName+"', sql_query 'select * from "+remoteViewName+"' );";
 
                 }
 

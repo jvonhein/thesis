@@ -37,7 +37,7 @@ public class NEStart {
                 final String jdbcUrl = System.getenv("JDBC_URL") != null ? System.getenv("JDBC_URL") : "testurl";
                 final String jdbcUser = System.getenv("JDBC_USER") != null ? System.getenv("JDBC_USER") : "testuser";
                 final String jdbcPw = System.getenv("JDBC_PW") != null ? System.getenv("JDBC_PW") : "testpw";
-                final ExecutionEngine engine = System.getenv("ENGINE") != null ? getEngine(System.getenv("JDBC_URL")) : ExecutionEngine.MARIADB;
+                final ExecutionEngine engine = System.getenv("ENGINE") != null ? getEngine(System.getenv("ENGINE")) : ExecutionEngine.POSTGRES;
 
                 context.spawn(NodeExecutor.create(jdbcUrl, jdbcUser, jdbcPw, engine), "node-executor");
 

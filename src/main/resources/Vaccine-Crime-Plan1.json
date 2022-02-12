@@ -633,7 +633,7 @@
                     {
                       "type": "literal",
                       "dataType": "String",
-                      "value": "KÖRPERVERLETZUNG"
+                      "value": "assault"
                     }
                   ]
                 }

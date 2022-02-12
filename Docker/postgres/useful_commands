@@ -1,10 +1,14 @@
 CREATE EXTENSION odbc_fdw;
 
-CREATE SERVER mdb1 FOREIGN DATA WRAPPER odbc_fdw OPTIONS (dsn 'mdb_criminals');
+CREATE SERVER mdb_criminals FOREIGN DATA WRAPPER odbc_fdw OPTIONS (dsn 'mdb_criminals');
 
-CREATE USER MAPPING FOR postgres SERVER mdb1 OPTIONS (odbc_UID 'root', odbc_PWD '');
+CREATE USER MAPPING FOR postgres SERVER mdb_criminals OPTIONS (odbc_UID 'root', odbc_PWD '');
 
-IMPORT FOREIGN SCHEMA test FROM SERVER mdb1 INTO PUBLIC 
+CREATE SERVER mdb_crime FOREIGN DATA WRAPPER odbc_fdw OPTIONS (dsn 'mdb_crime');
+
+CREATE USER MAPPING FOR postgres SERVER mdb_crime OPTIONS (odbc_UID 'root', odbc_PWD '');
+
+IMPORT FOREIGN SCHEMA test FROM SERVER mdb_criminals INTO PUBLIC
 OPTIONS (
     odbc_DATABASE 'mdb',
     table 'criminals_r',
