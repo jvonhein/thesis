@@ -11,6 +11,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import scala.collection.Iterator;
 import scala.collection.immutable.Set;
 
+import java.util.TreeSet;
+
+import static agora.execution.NodeExecutor.localExecutorServiceKey;
+
 /**
  * Global Optimizer
  * Should be a Singleton Actor and entry point for user queries.
@@ -40,7 +44,8 @@ public class ExecutionManager extends AbstractBehavior<ExecutionManager.Query> {
     private final ActorContext<Query> context;
     private final ActorRef<Receptionist.Listing> listingResponseAdapter;
     String nodeExecutorActorPath;
-    String iqr;
+    JsonNode iqr;
+    private TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> registeredNodeExecutors = new TreeSet<>();
     // Set of LocalExecutors in the System
     // Map of Assets to LocalExecutors (in order to be able be able to perform the Optimization process and map operations to localExecutors)
 
@@ -50,11 +55,11 @@ public class ExecutionManager extends AbstractBehavior<ExecutionManager.Query> {
         super(context);
         this.context = context;
         this.listingResponseAdapter = context.messageAdapter(Receptionist.Listing.class, ListingResponse::new);
-        this.iqr = iqr;
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = null;
         try {
             node = mapper.readTree(iqr);
+            this.iqr=node;
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
@@ -62,7 +67,7 @@ public class ExecutionManager extends AbstractBehavior<ExecutionManager.Query> {
 
         context.getSystem()
                 .receptionist()
-                .tell(Receptionist.subscribe(NodeExecutor.localExecutorServiceKey, listingResponseAdapter));
+                .tell(Receptionist.subscribe(localExecutorServiceKey, listingResponseAdapter));
     }
 
     public static Behavior<Query> create(String iqr) {
@@ -71,17 +76,20 @@ public class ExecutionManager extends AbstractBehavior<ExecutionManager.Query> {
 
 
     private Behavior<Query> onListingResponse(ListingResponse msg){
-        context.getLog().info("\n\nListing Response received:\n");
-        final Set<ActorRef<NodeExecutor.ExecutorMessage>> actorRefSet = msg.listing.allServiceInstances(NodeExecutor.localExecutorServiceKey);
-        final Iterator<ActorRef<NodeExecutor.ExecutorMessage>> iterator = actorRefSet.iterator();
-        while (iterator.hasNext()){
-            final ActorRef<NodeExecutor.ExecutorMessage> nodeExecutor = iterator.next();
-            if (nodeExecutor.path().equals(nodeExecutorActorPath)){
-                nodeExecutor.tell(new NodeExecutor.AgoraQuery(iqr, null));
+
+        final Set<ActorRef<NodeExecutor.ExecutorMessage>> newRegisteredNodeExecutors = msg.listing.allServiceInstances(localExecutorServiceKey);
+        newRegisteredNodeExecutors.foreach(actorRef -> {
+            if (!this.registeredNodeExecutors.contains(actorRef)){
+                this.registeredNodeExecutors.add(actorRef);
+                if (actorRef.path().toString().equals(nodeExecutorActorPath)) {
+                    actorRef.tell(new NodeExecutor.AgoraQuery(iqr, null, actorRef.path().toString()));
+                }
+                getContext().getLog().info("\n\n\nnew listing received. all current registered nodeExecutors: {}", this.registeredNodeExecutors);
+                context.getLog().info("\n\n");
             }
-            context.getLog().info("{}", nodeExecutor.toString());
-        }
-        context.getLog().info("\n\n");
+            return null;
+        });
+
         return this;
     }
 

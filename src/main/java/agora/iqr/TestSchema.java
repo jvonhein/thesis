@@ -85,25 +85,25 @@ public class TestSchema extends AbstractSchema {
         this.tableMap = tableMap;
     }
 
-    public TestSchema addTableFromColumns(JsonNode columns, String tableName) {
+    public TestSchema addTableFromColumns(JsonNode columnTypes, JsonNode columnNames, String tableName) {
 
         final TestTable newTable = new TestTable(relDataTypeFactory -> {
             RelDataTypeFactory.Builder builder = new RelDataTypeFactory.Builder(relDataTypeFactory);
-            int numColumns = columns.size();
+            int numColumns = columnTypes.size();
             for (int i = 0; i < numColumns; i++) {
-                String columnType = columns.get(i).asText();
+                String columnType = columnTypes.get(i).asText();
                 switch (columnType){
                     case "VARCHAR":
-                        builder.add("varchar_"+i, SqlTypeName.VARCHAR);
+                        builder.add(columnNames.get(i).asText(), SqlTypeName.VARCHAR);
                         break;
                     case "INTEGER":
-                        builder.add("integer_"+i, SqlTypeName.INTEGER);
+                        builder.add(columnNames.get(i).asText(), SqlTypeName.INTEGER);
                         break;
                     case "DATE":
-                        builder.add("date"+i, SqlTypeName.DATE);
+                        builder.add(columnNames.get(i).asText(), SqlTypeName.DATE);
                         break;
                     case "DOUBLE":
-                        builder.add("double"+i, SqlTypeName.DOUBLE);
+                        builder.add(columnNames.get(i).asText(), SqlTypeName.DOUBLE);
                         break;
                     default:
                         System.out.println("column Type not identified - not added to Schema!!!");

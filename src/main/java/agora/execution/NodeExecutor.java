@@ -1,8 +1,6 @@
 package agora.execution;
 
 import agora.JsonSerializable;
-import agora.iqr.RelFactory;
-import agora.iqr.TestSchema;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -11,16 +9,13 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
-import akka.cluster.typed.Cluster;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import scala.collection.immutable.Set;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.TreeSet;
 
 /**
@@ -42,13 +37,15 @@ public class NodeExecutor extends AbstractBehavior<NodeExecutor.ExecutorMessage>
     interface ExecutorMessage {}
 
     public static class AgoraQuery implements ExecutorMessage, JsonSerializable {
-        final public String iqr;
+        final public JsonNode iqr;
         final public ActorRef<QueryActor.QueryMessage>[] queryActorRefsByWorkload;
+        final public String recipient;
 
         @JsonCreator
-        public AgoraQuery(String iqr, ActorRef<QueryActor.QueryMessage>[] queryActorRefsByWorkload) {
+        public AgoraQuery(JsonNode iqr, ActorRef<QueryActor.QueryMessage>[] queryActorRefsByWorkload, String recipient) {
             this.iqr = iqr;
             this.queryActorRefsByWorkload = queryActorRefsByWorkload;
+            this.recipient = recipient;
         }
     }
 
@@ -74,6 +71,7 @@ public class NodeExecutor extends AbstractBehavior<NodeExecutor.ExecutorMessage>
     private final String jdbcPw;
     private final ExecutionEngine engine;
     private HashMap<Integer, ActorRef<QueryActor.QueryMessage>> currentQueries = new HashMap<>();
+    private String remoteActorPath = null;
 
     private NodeExecutor(ActorContext<ExecutorMessage> context, String jdbcUrl, String jdbcUser, String jdbcPw, ExecutionEngine engine) {
         super(context);
@@ -101,15 +99,19 @@ public class NodeExecutor extends AbstractBehavior<NodeExecutor.ExecutorMessage>
     }
 
     private Behavior<ExecutorMessage> receiveIQR(AgoraQuery msg){
+
+        remoteActorPath = msg.recipient;
+
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode node = mapper.readTree(msg.iqr);
+            JsonNode node = msg.iqr;
             int id = node.get("id").asInt();
-            Connection conn = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
+
+            // Connection conn = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
+            Connection conn = null;
             String name = "query_"+id;
             if(!currentQueries.containsKey(id))
             {
-                ActorRef<QueryActor.QueryMessage> query = getContext().spawn(QueryActor.create(id, registeredNodeExecutors, msg.iqr, conn, engine, msg.queryActorRefsByWorkload, getContext().getSelf()), name);
+                ActorRef<QueryActor.QueryMessage> query = getContext().spawn(QueryActor.create(id, registeredNodeExecutors, msg.iqr, conn, engine, msg.queryActorRefsByWorkload, remoteActorPath), name);
                 currentQueries.put(id, query);
             }
 

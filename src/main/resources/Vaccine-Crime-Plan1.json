@@ -6,7 +6,7 @@
       "id": 0,
       "location": "Berlin",
       "execution-engine": "postgres",
-      "executor-actorRef": "akka://sys@hostA:2552/user/executor",
+      "executor-actorRef": "akka://clustering-cluster@127.0.0.1:1600/user/node-executor",
       "local-execution-plan": [
         {
           "id": 0,
@@ -27,7 +27,7 @@
           "input": [
             {
               "id": 0,
-              "continous": "false",
+              "continuous": "false",
               "direction": "pull",
               "type": "remoteView",
               "remote-execution-engine": "mariadb",
@@ -41,6 +41,11 @@
                   "VARCHAR",
                   "INTEGER",
                   "INTEGER"
+                ],
+                "columnNames": [
+                  "bundesland",
+                  "ciminals_vaccinated",
+                  "criminals_total"
                 ]
               }
             }
@@ -56,7 +61,7 @@
                 "INTEGER",
                 "INTEGER"
               ],
-              "columNames": [
+              "columnNames": [
                 "bundesland",
                 "population",
                 "pop_vaccinated",
@@ -360,7 +365,7 @@
       "id": 1,
       "location": "Frankfurt",
       "execution-engine": "mariadb",
-      "executor-actorRef": "akka://sysB@hostB:2552/user/executor",
+      "executor-actorRef": "akka://clustering-cluster@127.0.0.1:1601/user/node-executor",
       "local-execution-plan": [
         {
           "id": 0,
@@ -381,7 +386,7 @@
           "input": [
             {
               "id": 0,
-              "continous": "false",
+              "continuous": "false",
               "direction": "pull",
               "type": "remoteView",
               "remote-execution-engine": "mariadb",
@@ -394,6 +399,10 @@
                 "columnTypes": [
                   "INTEGER",
                   "INTEGER"
+                ],
+                "columnNames": [
+                  "id",
+                  "vaccine_status"
                 ]
               }
             }
@@ -401,7 +410,12 @@
           "output": [
             {
               "type": "view",
-              "name": "temp_view_123_1_0"
+              "name": "temp_view_123_1_0",
+              "columnNames": [
+                "bundesland",
+                "ciminals_vaccinated",
+                "criminals_total"
+              ]
             }
           ],
           "on-success": [
@@ -676,7 +690,7 @@
       "id": 2,
       "location": "Frankfurt",
       "execution-engine": "mariadb",
-      "executor-actorRef": "akka://sysC@hostC:2552/user/executor",
+      "executor-actorRef": "akka://clustering-cluster@127.0.0.1:1602/user/node-executor",
       "local-execution-plan": [
         {
           "id": 0,
@@ -702,7 +716,11 @@
           "output": [
             {
               "type": "view",
-              "name": "temp_view_123_2_0"
+              "name": "temp_view_123_2_0",
+              "columnNames": [
+                "id",
+                "vaccine_status"
+              ]
             }
           ],
           "operators": [

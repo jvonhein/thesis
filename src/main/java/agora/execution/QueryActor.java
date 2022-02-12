@@ -3,8 +3,6 @@ package agora.execution;
 import agora.JsonSerializable;
 import agora.iqr.RelFactory;
 import agora.iqr.TestSchema;
-import akka.actor.Status;
-import akka.actor.Status.Success;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -13,12 +11,11 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
-import org.apache.calcite.rel.rel2sql.SqlImplementor;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.tools.FrameworkConfig;
 import org.apache.calcite.tools.Frameworks;
 import org.apache.calcite.tools.RelBuilder;
@@ -73,8 +70,9 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
     private Connection conn; // jdbc connection to execution engine / database
     private final ExecutionEngine engine;
     String hostname=System.getenv("EEHOSTNAME");
-    private final ActorRef<NodeExecutor.ExecutorMessage> nodeExecutorActorRef; // need to know which node Executor this Query belongs to
+    private final String actorPath; // need to know which node Executor this Query belongs to
     private TestSchema schema = new TestSchema();
+    private JsonNode iqr;
     private int workloadId = -1;
     private JsonNode workload;
     private final int queryID;
@@ -86,14 +84,15 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
 
 
 
-    private QueryActor(int id, ActorContext<QueryMessage> context, TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> registeredNodeExecutors, String iqr, Connection conn, ExecutionEngine engine,
-                       ActorRef<QueryMessage>[] queryActorRefs, ActorRef<NodeExecutor.ExecutorMessage> nodeExecutorActorRef) {
+    private QueryActor(int id, ActorContext<QueryMessage> context, TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> registeredNodeExecutors, JsonNode iqr, Connection conn, ExecutionEngine engine,
+                       ActorRef<QueryMessage>[] queryActorRefs, String actorPath) {
         super(context);
         this.conn = conn;
         this.engine = engine;
         this.queryActorRefsByWorkload = queryActorRefs;
-        this.nodeExecutorActorRef = nodeExecutorActorRef;
+        this.actorPath = actorPath;
         this.queryID = id;
+        this.iqr = iqr;
 
         try {
             processIqr(iqr, registeredNodeExecutors);
@@ -102,16 +101,16 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
         }
     }
 
-    public static Behavior<QueryMessage> create(int id, TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> nodeExecutors, String iqr, Connection conn, ExecutionEngine engine,
-                                                ActorRef<QueryMessage>[] queryActorRefs, ActorRef<NodeExecutor.ExecutorMessage> nodeExecutorActorRef){
-        return Behaviors.setup(context -> new QueryActor(id, context, nodeExecutors, iqr, conn, engine, queryActorRefs, nodeExecutorActorRef));
+    public static Behavior<QueryMessage> create(int id, TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> nodeExecutors, JsonNode iqr, Connection conn, ExecutionEngine engine,
+                                                ActorRef<QueryMessage>[] queryActorRefs, String actorPath){
+        return Behaviors.setup(context -> new QueryActor(id, context, nodeExecutors, iqr, conn, engine, queryActorRefs, actorPath));
     }
 
 
-    private void processIqr(String iqr, TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> registeredNodeExecutors) throws JsonProcessingException {
+    private void processIqr(JsonNode node, TreeSet<ActorRef<NodeExecutor.ExecutorMessage>> registeredNodeExecutors) throws JsonProcessingException {
 
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode node = mapper.readTree(iqr);
+        //ObjectMapper mapper = new ObjectMapper();
+        //JsonNode node = mapper.readTree(iqr);
         int numWorkloads = node.get("workload").size();
         hostnamesByWorkload = new String[numWorkloads];
         String[] executorActorPathsByWorkload = new String[numWorkloads];
@@ -121,9 +120,10 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
         // find workload this query is responsible for
         for (int i = 0; i < numWorkloads; i++) {
             executorActorPathsByWorkload[i] = node.get("workload").get(i).get("executor-actorRef").asText();
-            if (node.get("workload").get(i).get("executor-actorRef").asText().equals(nodeExecutorActorRef)){
+
+            if (node.get("workload").get(i).get("executor-actorRef").asText().equals(actorPath)){
                 this.workload = node.get("workload").get(i);
-                this.workloadId = workload.get("id").asInt();
+                this.workloadId = this.workload.get("id").asInt();
                 hostnamesByWorkload[i] = hostname;
                 queryActorRefsByWorkload[i]=getContext().getSelf();
             }
@@ -134,22 +134,27 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
         }else {
             int numLocalExecutionPlans = workload.get("local-execution-plan").size();
             requirements = new ArrayList[numLocalExecutionPlans];
+            HashSet<ActorRef<NodeExecutor.ExecutorMessage>> upstreamNodeExecutors = new HashSet<>();
             for (int i = 0; i < numLocalExecutionPlans; i++) {
                 JsonNode localExecutionPlan = workload.get("local-execution-plan").get(i);
                 requirements[i]=new ArrayList<>();
                 // check requirements
-                if (localExecutionPlan.has("start-condition") && localExecutionPlan.get("start-condition").has("requirements")){
+                if (localExecutionPlan.has("start-condition") && localExecutionPlan.get("start-condition").has("requirements")
+                        && localExecutionPlan.get("start-condition").get("requirements").size() > 0){
+
                     localExecutionPlan.get("start-condition").get("requirements").forEach(requirement -> {
                         int reqWorkloadId = requirement.get("message").get("workload-id").asInt();
                         int reqExIndex = requirement.get("message").get("local-execution-plan-index").asInt();
                         Requirement r = new Requirement(reqWorkloadId, reqExIndex);
                         this.requirements[localExecutionPlan.get("id").asInt()].add(r);
+                        upstreamNodeExecutors.add(nodeExecutorsByWorkload[reqWorkloadId]);
                     });
                 } else {
                     // start query immediately
                     executePlan(localExecutionPlan);
                 }
             }
+            upstreamNodeExecutors.forEach(nodeExecutor -> nodeExecutor.tell(new NodeExecutor.AgoraQuery(iqr, queryActorRefsByWorkload, nodeExecutor.path().toString())));
         }
     }
 
@@ -162,7 +167,15 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
             gatherInput(localExecutionPlan.get("input"));
         }
         // translate query
-        final SchemaPlus rootSchema = Frameworks.createRootSchema(true).add("vaccine_crime", schema);
+
+        // schema currently hard-coded. should later on be just connected to the database, manually adding schema won't be necessary anymore
+        String schemaName ="";
+        if (engine==ExecutionEngine.MARIADB){
+            schemaName="mdb";
+        } else if (engine==ExecutionEngine.POSTGRES){
+            schemaName="db1";
+        }
+        final SchemaPlus rootSchema = Frameworks.createRootSchema(true).add(schemaName, schema);
         final Frameworks.ConfigBuilder configBuilder = Frameworks.newConfigBuilder();
         final FrameworkConfig config = configBuilder
                 .defaultSchema(rootSchema)
@@ -183,46 +196,69 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
         final RelToSqlConverter relToSqlConverter = new RelToSqlConverter(dialect);
         try {
             final RelNode root = RelFactory.buildRelNodeRecursively(localExecutionPlan.get("operators"), 0, relBuilder);
-            String sqlString = relToSqlConverter.visitRoot(root).toString();
-            final Statement statement = conn.createStatement();
-            JsonNode output = localExecutionPlan.get("output").get(0);
-            // check output to see what to do with the query - in example either save to file or save as view (which changes the statement slightly)
-            switch (output.get("type").asText()){
-                case "file":
-                    ResultSet rs = statement.executeQuery(sqlString);
-                    String path = output.get("path").asText();
-                    FileWriter fileWriter = new FileWriter(new File(path));
-                    BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-                    int numColumns = output.get("columnTypes").size();
-                    String[] columnTypes = new String[numColumns];
-                    for (int i = 0; i < numColumns; i++) {
-                        // write header
-                        if (output.has("columnNames")){
-                            bufferedWriter.write(output.get("columnNames").get(i).asText());
-                            if (i < numColumns-1)
-                                bufferedWriter.write(" | ");
-                            else
-                                bufferedWriter.newLine();
-                        }
-                        columnTypes[i]=output.get("columnTypes").get(i).asText();
-                    }
 
-                    while (rs.next()){
+            final SqlNode sqlNode = relToSqlConverter.visitRoot(root).asStatement();
+            String sqlString = sqlNode.toString();
+            JsonNode output = localExecutionPlan.get("output").get(0); // for now assume only one output at all times
+
+            // make sure the columns are named according to the iqr!
+            final JsonNode outColNames = output.path("columnNames");
+            String[] splits = sqlString.split(",|\\nFROM", outColNames.size()+1);
+            String updatedSqlString = "";
+            for (int i = 0; i < outColNames.size(); i++) {
+                String split = splits[i].replaceAll("AS `\\$f[0-9]+`", "");
+                if (i < outColNames.size()-1)
+                    updatedSqlString += split + " AS " + outColNames.path(i).asText() +", ";
+                else
+                    updatedSqlString += split + " AS " + outColNames.path(i).asText() +"\nFROM" + splits[i+1]+";"; // end statement with semicolon
+            }
+
+
+            // getContext().getLog().info("\n\n\nold Query:\n" + sqlString + "\n\n\n");
+            getContext().getLog().info("\n\n\nnew Query:\n" + updatedSqlString + "\n\n\n");
+
+            if (conn!=null){
+                final Statement statement = conn.createStatement();
+
+                // check output to see what to do with the query - in example either save to file or save as view (which changes the statement slightly)
+                switch (output.get("type").asText()){
+                    case "file":
+                        ResultSet rs = statement.executeQuery(updatedSqlString);
+                        String path = output.get("path").asText();
+                        FileWriter fileWriter = new FileWriter(new File(path));
+                        BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+                        int numColumns = output.get("columnTypes").size();
+                        String[] columnTypes = new String[numColumns];
+
                         for (int i = 0; i < numColumns; i++) {
-                            bufferedWriter.write(getColumn(i, columnTypes, rs));
-                            if (i < numColumns-1)
-                                bufferedWriter.write(" | ");
-                            else
-                                bufferedWriter.newLine();
+                            // write header
+                            if (output.has("columnNames")){
+                                bufferedWriter.write(output.get("columnNames").get(i).asText());
+                                if (i < numColumns-1)
+                                    bufferedWriter.write(" | ");
+                                else
+                                    bufferedWriter.newLine();
+                            }
+                            columnTypes[i]=output.get("columnTypes").get(i).asText();
                         }
-                    }
-                    bufferedWriter.flush();
-                    bufferedWriter.close();
-                    break;
-                case "view":
-                    String viewName = localExecutionPlan.get("output").get("name").asText();
-                    sqlString = "CREATE VIEW "+viewName+" AS "+sqlString;
-                    statement.executeQuery(sqlString);
+
+                        while (rs.next()){
+                            for (int i = 0; i < numColumns; i++) {
+                                bufferedWriter.write(getColumnFromResultSet(i, columnTypes, rs));
+                                if (i < numColumns-1)
+                                    bufferedWriter.write(" | ");
+                                else
+                                    bufferedWriter.newLine();
+                            }
+                        }
+                        bufferedWriter.flush();
+                        bufferedWriter.close();
+                        break;
+                    case "view":
+                        String viewName = localExecutionPlan.get("output").get("name").asText();
+                        updatedSqlString = "CREATE VIEW "+viewName+" AS "+updatedSqlString;
+                        statement.executeQuery(updatedSqlString);
+                }
             }
 
         } catch (Exception e) {
@@ -246,9 +282,12 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
 
     }
 
-    private Behavior<QueryMessage> onRemoteSucessMessage(RemoteExecutionFinished msg){
+    private Behavior<QueryMessage> onRemoteSuccessMessage(RemoteExecutionFinished msg){
+
+        getContext().getLog().info("\n\nRemoteSuccessExecutionFinished Message received from : {}, {}\n\n", msg.workloadId, msg.localExecutionPlanIndex);
 
         int unfinishedLocalExecutionPlans = requirements.length;
+        hostnamesByWorkload[msg.workloadId]=msg.hostname;
 
         for (int i = 0; i < requirements.length; i++) {
             requirements[i].removeIf(requirement -> (requirement.workloadId==msg.workloadId) && (requirement.localExecutionPlanIndex==msg.localExecutionPlanIndex));
@@ -259,18 +298,18 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
         }
         // job finished -> shut down
         if (unfinishedLocalExecutionPlans==0){
-            try {
-                conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                conn.close();
+//            } catch (SQLException e) {
+//                e.printStackTrace();
+//            }
             return Behaviors.stopped();
         }
 
         return this;
     }
 
-    private String getColumn(int i, String[] columnTypes, ResultSet rs) throws SQLException {
+    private String getColumnFromResultSet(int i, String[] columnTypes, ResultSet rs) throws SQLException {
         String result = "";
         switch (columnTypes[i]){
             case "VARCHAR": result = rs.getString(i);
@@ -293,17 +332,17 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
             if (input.get("type").asText().equals("remoteView")){
                 JsonNode view = input.get("view");
                 String localNewName = view.get("local-new-name").asText();
-                schema.addTableFromColumns(view.get("columnTypes"), localNewName);
+                schema.addTableFromColumns(view.path("columnTypes"), view.path("columnNames"), localNewName);
 
-                String remoteViewName = input.get("remote-view-name").asText();
-                String hostname = hostnamesByWorkload[view.get("workload-id").asInt()];
+                String remoteViewName = view.get("remote-view-name").asText();
+                String hostname = hostnamesByWorkload[input.get("workload-id").asInt()];
                 String database = view.get("database").asText();
                 String sqlStatement = "";
 
                 switch (engine){
                     case MARIADB:
                         // uid and pwd hardcoded for now
-                        String remoteEngine = view.get("remote-execution-engine").asText();
+                        String remoteEngine = input.get("remote-execution-engine").asText();
                         if (remoteEngine.equals("mariadb")){
                             sqlStatement = "CREATE TABLE "+localNewName+" ENGINE=CONNECT DEFAULT CHARSET=utf8mb4 CONNECTION='mysql://mariadb:123456@"+hostname+"/"+database+"/"+remoteViewName+"' TABLE_TYPE=MYSQL;";
                         } else if (remoteEngine.equals("postgres")){
@@ -319,8 +358,12 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
                 }
 
                 try {
-                    final Statement statement = conn.createStatement();
-                    statement.executeQuery(sqlStatement);
+                    if (conn==null){
+                        getContext().getLog().info("\n\n\nSQL-Preparation-Statement: {}\n\n\n", sqlStatement);
+                    } else {
+                        final Statement statement = conn.createStatement();
+                        statement.executeQuery(sqlStatement);
+                    }
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -333,7 +376,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
         ActorRef<NodeExecutor.ExecutorMessage>[] result = new ActorRef[actorPaths.length];
         for (int i = 0; i < actorPaths.length; i++) {
             String path = actorPaths[i];
-            final Optional<ActorRef<NodeExecutor.ExecutorMessage>> match = possibleRefs.stream().filter(actorRef -> actorRef.path().equals(path)).findFirst();
+            final Optional<ActorRef<NodeExecutor.ExecutorMessage>> match = possibleRefs.stream().filter(actorRef -> actorRef.path().toString().equals(path)).findFirst();
             if (match.isPresent())
                 result[i]=match.get();
         }
@@ -343,7 +386,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
     @Override
     public Receive<QueryMessage> createReceive() {
         return newReceiveBuilder()
-                .onMessage(RemoteExecutionFinished.class, this::onRemoteSucessMessage)
+                .onMessage(RemoteExecutionFinished.class, this::onRemoteSuccessMessage)
                 .build();
     }
 }

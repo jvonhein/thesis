@@ -11,31 +11,10 @@ import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Demo {
+public class NEStart {
 
     public static void main(String[] args) {
-        if(args.length == 1){
-            // Override the configuration of the port
-            Map<String, Object> overrides = new HashMap<>();
-            overrides.put("akka.remote.artery.canonical.port", 1603);
-            Config config = ConfigFactory.parseMap(overrides).withFallback(ConfigFactory.load());
-            //Config config = ConfigFactory.load();
-            String pathToIqr = args[0];
-            try {
-                BufferedReader reader = new BufferedReader(new FileReader(pathToIqr));
-                StringBuilder resultStringBuilder = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    resultStringBuilder.append(line).append("\n");
-                }
-                reader.close();
-                String iqr = resultStringBuilder.toString();
 
-                ActorSystem<Void> system = ActorSystem.create(RootBehaviorEM.create(iqr), "clustering-cluster", config);
-            } catch (Exception e){
-                e.printStackTrace();
-            }
-        }
         if (args.length == 0) {
 
             // in docker environment
@@ -51,15 +30,6 @@ public class Demo {
         }
     }
 
-    private static class RootBehaviorEM {
-        static Behavior<Void> create(String iqr) {
-            return Behaviors.setup(context -> {
-                context.spawn(ExecutionManager.create(iqr), "ExecutionManager");
-                return Behaviors.empty();
-            });
-        }
-    }
-
     private static class RootBehaviorNE {
         static Behavior<Void> create() {
             return Behaviors.setup(context -> {
@@ -69,7 +39,7 @@ public class Demo {
                 final String jdbcPw = System.getenv("JDBC_PW") != null ? System.getenv("JDBC_PW") : "testpw";
                 final ExecutionEngine engine = System.getenv("ENGINE") != null ? getEngine(System.getenv("JDBC_URL")) : ExecutionEngine.MARIADB;
 
-                context.spawn(NodeExecutor.create(jdbcUrl, jdbcUser, jdbcPw, engine), "Node-Executor_for_"+jdbcUser);
+                context.spawn(NodeExecutor.create(jdbcUrl, jdbcUser, jdbcPw, engine), "node-executor");
 
                 return Behaviors.empty();
             });
