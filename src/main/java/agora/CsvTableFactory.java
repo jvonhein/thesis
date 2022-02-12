@@ -22,7 +22,7 @@ public class CsvTableFactory
         TreeMap<Integer, Land> landProbability = new TreeMap<>();
         landProbability.put(17925570, Land.NORD_RHEIN_WESTFALEN);
         landProbability.put(31065753, Land.BAYERN);
-        landProbability.put(42168796, Land.BADEN_WÜRTEMBERG);
+        landProbability.put(42168796, Land.BADEN_WUERTEMBERG);
         landProbability.put(50172217, Land.NIEDERSACHSEN);
         landProbability.put(56465371, Land.HESSEN);
         landProbability.put(60563762, Land.RHEINLAND_PFALZ);
@@ -31,7 +31,7 @@ public class CsvTableFactory
         landProbability.put(71195666, Land.SCHLESWIG_HOLSTEIN);
         landProbability.put(73726737, Land.BRANDENBURG);
         landProbability.put(75907421, Land.SACHSEN);
-        landProbability.put(78027658, Land.THÜRINGEN);
+        landProbability.put(78027658, Land.THUERINGEN);
         landProbability.put(79880136, Land.HAMBURG);
         landProbability.put(81490910, Land.MECKLENBURG_VORPOMMERN);
         landProbability.put(82474901, Land.SAARLAND);
@@ -132,7 +132,7 @@ public class CsvTableFactory
     }
 
     public enum CrimeCategory{
-        MORD, VERGEWALTIGUNG, TOTSCHLAG, RAUB, DIEBSTAHL, KÖRPERVERLETZUNG, BETRUG, SACHBESCHÄDIGUNG, BELEIDIGUNG;
+        murder, rape, homicide, robbery, theft, assault, fraud, vandalism, slander;
 
         private static final List<CrimeCategory> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
         private static final int SIZE = VALUES.size();
@@ -143,13 +143,13 @@ public class CsvTableFactory
     }
 
     public enum Land{
-        BADEN_WÜRTEMBERG,
+        BADEN_WUERTEMBERG,
         BAYERN,
         RHEINLAND_PFALZ,
         SAARLAND,
         HESSEN,
         NORD_RHEIN_WESTFALEN,
-        THÜRINGEN,
+        THUERINGEN,
         SACHSEN,
         SACHSEN_ANHALT,
         BRANDENBURG,
