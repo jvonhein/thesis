@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import scala.collection.immutable.Set;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.HashMap;
 import java.util.TreeSet;
 
@@ -105,8 +106,8 @@ public class NodeExecutor extends AbstractBehavior<NodeExecutor.ExecutorMessage>
             JsonNode node = msg.iqr;
             int id = node.get("id").asInt();
 
-            // Connection conn = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
-            Connection conn = null;
+            Connection conn = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
+            // Connection conn = null;
             String name = "query_"+id;
             if(!currentQueries.containsKey(id))
             {

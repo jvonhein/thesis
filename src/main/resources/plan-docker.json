@@ -1,0 +1,788 @@
+{
+  "name": "Vaccine Crime Query",
+  "id": 123,
+  "workload": [
+    {
+      "id": 0,
+      "location": "Berlin",
+      "execution-engine": "postgres",
+      "executor-actorRef": "akka://clustering-cluster@ne1:1600/user/node-executor",
+      "local-execution-plan": [
+        {
+          "id": 0,
+          "iterative": "false",
+          "start-condition": {
+            "requirements": [
+              {
+                "type": "remote execution finished",
+                "message": {
+                  "status": "success",
+                  "workload-id": 1,
+                  "local-execution-plan-index": 0
+                }
+              }
+            ]
+          },
+          "failure-strategy": "none",
+          "input": [
+            {
+              "id": 0,
+              "continuous": "false",
+              "direction": "pull",
+              "type": "remoteView",
+              "remote-execution-engine": "mariadb",
+              "workload-id": 1,
+              "local-execution-plan-index": 0,
+              "view": {
+                "remote-view-name": "temp_view_123_1_0",
+                "local-new-name": "remote_view_123_1_0",
+                "database": "mdb",
+                "columnTypes": [
+                  "VARCHAR",
+                  "INTEGER",
+                  "INTEGER"
+                ],
+                "columnNames": [
+                  "bundesland",
+                  "ciminals_vaccinated",
+                  "criminals_total"
+                ]
+              }
+            }
+          ],
+          "output": [
+            {
+              "type": "file",
+              "path": "/tmp/q_123.csv",
+              "columnTypes": [
+                "VARCHAR",
+                "INTEGER",
+                "INTEGER",
+                "INTEGER",
+                "INTEGER"
+              ],
+              "columnNames": [
+                "bundesland",
+                "population",
+                "pop_vaccinated",
+                "criminals_vaccinated",
+                "criminals_total"
+              ]
+            }
+          ],
+          "operators": [
+            {
+              "id": 0,
+              "type": "project",
+              "inRowcount": 16,
+              "cumulative-cost": 50000,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "VARCHAR",
+                "INTEGER",
+                "VARCHAR",
+                "INTEGER",
+                "VARCHAR",
+                "INTEGER",
+                "INTEGER"
+              ],
+              "input": [
+                1
+              ],
+              "output": [
+                {
+                  "type": "field",
+                  "fieldOrdinal": 0
+                },
+                {
+                  "type": "field",
+                  "fieldOrdinal": 1
+                },
+                {
+                  "type": "field",
+                  "fieldOrdinal": 3
+                },
+                {
+                  "type": "field",
+                  "fieldOrdinal": 5
+                },
+                {
+                  "type": "field",
+                  "fieldOrdinal": 6
+                }
+              ]
+            },
+            {
+              "id": 1,
+              "type": "join",
+              "inRowcount": 80000,
+              "cumulative-cost": 48000,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                [
+                  "VARCHAR",
+                  "INTEGER",
+                  "VARCHAR",
+                  "INTEGER"
+                ],
+                [
+                  "VARCHAR",
+                  "INTEGER",
+                  "INTEGER"
+                ]
+              ],
+              "input": [
+                2,
+                9
+              ],
+              "jointype": "INNER",
+              "conditions": [
+                {
+                  "operator": "EQUALS",
+                  "leftOrdinal": 0,
+                  "rightOrdinal": 0
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "type": "join",
+              "inRowcount": 16,
+              "cumulative-cost": "10000",
+              "ordering": [],
+              "orderIndices": [],
+              "inColumnTypes": [
+                [
+                  "VARCHAR",
+                  "INTEGER"
+                ],
+                [
+                  "VARCHAR",
+                  "INTEGER"
+                ]
+              ],
+              "input": [
+                3,
+                5
+              ],
+              "jointype": "INNER",
+              "conditions": [
+                {
+                  "operator": "EQUALS",
+                  "leftOrdinal": 0,
+                  "rightOrdinal": 0
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "type": "project",
+              "inRowcount": 16,
+              "cumulative-cost": 100,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "VARCHAR",
+                "INTEGER",
+                "INTEGER",
+                "VARCHAR"
+              ],
+              "input": [
+                4
+              ],
+              "output": [
+                {
+                  "type": "field",
+                  "fieldOrdinal": 0
+                },
+                {
+                  "type": "field",
+                  "fieldOrdinal": 1
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "type": "tablescan",
+              "inRowcount": 16,
+              "cumulative-cost": 50,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "VARCHAR",
+                "INTEGER",
+                "INTEGER",
+                "VARCHAR"
+              ],
+              "input": [],
+              "tableName": "country_stats",
+              "database": "db1"
+            },
+            {
+              "id": 5,
+              "type": "aggregate",
+              "inRowcount": 60000000,
+              "cumulative-cost": 10000,
+              "ordering": [],
+              "orderIndices": [],
+              "inColumnTypes": [
+                "VARCHAR"
+              ],
+              "input": [
+                6
+              ],
+              "GroupingIndices": [
+                0
+              ],
+              "aggCalls": [
+                {
+                  "type": "Count",
+                  "indices": []
+                }
+              ]
+            },
+            {
+              "id": 6,
+              "type": "project",
+              "inRowcount": 60000000,
+              "cumulative-cost": 3500,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "VARCHAR",
+                "INTEGER",
+                "DATE",
+                "VARCHAR",
+                "VARCHAR"
+              ],
+              "input": [
+                7
+              ],
+              "output": [
+                {
+                  "type": "field",
+                  "fieldOrdinal": 4
+                }
+              ]
+            },
+            {
+              "id": 7,
+              "type": "filter",
+              "inRowcount": 160000000,
+              "cumulative-cost": 3000,
+              "ordering": "asc",
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "VARCHAR",
+                "INTEGER",
+                "DATE",
+                "VARCHAR",
+                "VARCHAR"
+              ],
+              "input": [
+                8
+              ],
+              "predicates": [
+                {
+                  "operator": "EQUALS",
+                  "operands": [
+                    {
+                      "type": "field",
+                      "fieldOrdinal": 1
+                    },
+                    {
+                      "type": "literal",
+                      "dataType": "Int",
+                      "value": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 8,
+              "type": "tablescan",
+              "inRowcount": 160000000,
+              "cumulative-cost": 2000,
+              "ordering": [],
+              "orderIndices": [],
+              "inColumnTypes": [
+                "VARCHAR",
+                "INTEGER",
+                "DATE",
+                "VARCHAR",
+                "VARCHAR"
+              ],
+              "input": [],
+              "tableName": "vaccine_data",
+              "database": "db1"
+            },
+            {
+              "id": 9,
+              "type": "tablescan",
+              "inRowcount": 16,
+              "cumulative-cost": 50,
+              "ordering": [],
+              "orderIndices": [],
+              "inColumnTypes": [
+                "VARCHAR",
+                "INTEGER",
+                "INTEGER"
+              ],
+              "input": [],
+              "tableName": "remote_view_123_1_0",
+              "database": "db1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "location": "Frankfurt",
+      "execution-engine": "mariadb",
+      "executor-actorRef": "akka://clustering-cluster@ne2:1601/user/node-executor",
+      "local-execution-plan": [
+        {
+          "id": 0,
+          "iterative": "false",
+          "start-condition": {
+            "requirements": [
+              {
+                "type": "remote execution finished",
+                "message": {
+                  "status": "success",
+                  "workload-id": 2,
+                  "local-execution-plan-index": 0
+                }
+              }
+            ]
+          },
+          "failure-strategy": "none",
+          "input": [
+            {
+              "id": 0,
+              "continuous": "false",
+              "direction": "pull",
+              "type": "remoteView",
+              "remote-execution-engine": "mariadb",
+              "workload-id": 2,
+              "local-execution-plan-index": 0,
+              "view": {
+                "remote-view-name": "temp_view_123_2_0",
+                "local-new-name": "remote_view_123_2_0",
+                "database": "mdb",
+                "columnTypes": [
+                  "INTEGER",
+                  "INTEGER"
+                ],
+                "columnNames": [
+                  "id",
+                  "vaccine_status"
+                ]
+              }
+            }
+          ],
+          "output": [
+            {
+              "type": "view",
+              "name": "temp_view_123_1_0",
+              "columnNames": [
+                "bundesland",
+                "ciminals_vaccinated",
+                "criminals_total"
+              ]
+            }
+          ],
+          "on-success": [
+            {
+              "message": {
+                "to": 0,
+                "status": "success",
+                "content": [
+                  "workload-id",
+                  "local-execution-plan-index",
+                  "ee-credentials"
+                ]
+              }
+            }
+          ],
+          "operators": [
+            {
+              "id": 0,
+              "type": "aggregate",
+              "inRowcount": 50000,
+              "cumulative-cost": 18500,
+              "ordering": [],
+              "orderIndices": [],
+              "inColumnTypes": [
+                "VARCHAR",
+                "INTEGER"
+              ],
+              "input": [
+                1
+              ],
+              "GroupingIndices": [
+                0
+              ],
+              "aggCalls": [
+                {
+                  "type": "Count",
+                  "indices": [
+                    1
+                  ],
+                  "distinct": "false"
+                },
+                {
+                  "type": "Count",
+                  "indices": []
+                }
+              ]
+            },
+            {
+              "id": 1,
+              "type": "project",
+              "rowcount": 50000,
+              "cumulative-cost": 10000,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "VARCHAR",
+                "INTEGER",
+                "INTEGER",
+                "INTEGER"
+              ],
+              "input": [
+                2
+              ],
+              "output": [
+                {
+                  "type": "field",
+                  "fieldOrdinal": 0
+                },
+                {
+                  "type": "expression",
+                  "CASE": {
+                    "when": [
+                      {
+                        "operator": "EQUALS",
+                        "operands": [
+                          {
+                            "type": "field",
+                            "fieldOrdinal": 3
+                          },
+                          {
+                            "type": "literal",
+                            "dataType": "Int",
+                            "value": 1
+                          }
+                        ]
+                      }
+                    ],
+                    "then": [
+                      {
+                        "type": "literal",
+                        "dataType": "Int",
+                        "value": 1
+                      }
+                    ],
+                    "else": {
+                      "type": "literal",
+                      "dataType": "Null",
+                      "value": null
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "id": 2,
+              "type": "join",
+              "rowcount": 50000,
+              "cumulative-cost": "10000",
+              "ordering": [],
+              "orderIndices": [],
+              "inColumnTypes": [
+                [
+                  "VARCHAR",
+                  "INTEGER"
+                ],
+                [
+                  "INTEGER",
+                  "INTEGER"
+                ]
+              ],
+              "input": [
+                3,
+                6
+              ],
+              "jointype": "INNER",
+              "conditions": [
+                {
+                  "operator": "EQUALS",
+                  "leftOrdinal": 1,
+                  "rightOrdinal": 0
+                }
+              ]
+            },
+            {
+              "id": 3,
+              "type": "project",
+              "rowcount": 50000,
+              "cumulative-cost": 4500,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "INTEGER",
+                "VARCHAR",
+                "VARCHAR",
+                "DATE",
+                "INTEGER",
+                "INTEGER",
+                "VARCHAR"
+              ],
+              "input": [
+                4
+              ],
+              "output": [
+                {
+                  "type": "field",
+                  "fieldOrdinal": 1
+                },
+                {
+                  "type": "field",
+                  "fieldOrdinal": 4
+                }
+              ]
+            },
+            {
+              "id": 4,
+              "type": "filter",
+              "rowcount": 100000,
+              "cumulative-cost": 2000,
+              "ordering": "asc",
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "INTEGER",
+                "VARCHAR",
+                "VARCHAR",
+                "DATE",
+                "INTEGER",
+                "INTEGER",
+                "VARCHAR"
+              ],
+              "input": [
+                5
+              ],
+              "predicates": [
+                {
+                  "operator": "GREATER_THAN",
+                  "operands": [
+                    {
+                      "type": "field",
+                      "fieldOrdinal": 3
+                    },
+                    {
+                      "type": "literal",
+                      "dataType": "String",
+                      "value": "2021-07-00"
+                    }
+                  ]
+                },
+                {
+                  "operator": "EQUALS",
+                  "operands": [
+                    {
+                      "type": "field",
+                      "fieldOrdinal": 2
+                    },
+                    {
+                      "type": "literal",
+                      "dataType": "String",
+                      "value": "assault"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 5,
+              "type": "tablescan",
+              "rowcount": 250000,
+              "cumulative-cost": 1500,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "INTEGER",
+                "VARCHAR",
+                "VARCHAR",
+                "DATE",
+                "INTEGER",
+                "INTEGER",
+                "VARCHAR"
+              ],
+              "input": [],
+              "tableName": "crime",
+              "database": "mdb"
+            },
+            {
+              "id": 6,
+              "type": "tablescan",
+              "rowcount": 100000,
+              "cumulative-cost": 3000,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "INTEGER",
+                "INTEGER"
+              ],
+              "input": [],
+              "tableName": "remote_view_123_2_0",
+              "database": "mdb"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "location": "Frankfurt",
+      "execution-engine": "mariadb",
+      "executor-actorRef": "akka://clustering-cluster@ne3:1602/user/node-executor",
+      "local-execution-plan": [
+        {
+          "id": 0,
+          "iterative": "false",
+          "start-condition": {
+            "requirements": []
+          },
+          "failure-strategy": "none",
+          "on-success": [
+            {
+              "message": {
+                "to": 1,
+                "status": "success",
+                "content": [
+                  "workload-id",
+                  "local-execution-plan-index",
+                  "ee-credentials"
+                ]
+              }
+            }
+          ],
+          "input": [],
+          "output": [
+            {
+              "type": "view",
+              "name": "temp_view_123_2_0",
+              "columnNames": [
+                "id",
+                "vaccine_status"
+              ]
+            }
+          ],
+          "operators": [
+            {
+              "id": 0,
+              "type": "project",
+              "rowcount": 100000,
+              "cumulative-cost": 1500,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "INTEGER",
+                "CHAR",
+                "INTEGER",
+                "VARCHAR",
+                "INTEGER",
+                "VARCHAR"
+              ],
+              "input": [
+                1
+              ],
+              "output": [
+                {
+                  "type": "field",
+                  "fieldOrdinal": 0
+                },
+                {
+                  "type": "field",
+                  "fieldOrdinal": 4
+                }
+              ]
+            },
+            {
+              "id": 1,
+              "type": "tablescan",
+              "rowcount": 100000,
+              "cumulative-cost": 1000,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "INTEGER",
+                "CHAR",
+                "INTEGER",
+                "VARCHAR",
+                "INTEGER",
+                "VARCHAR"
+              ],
+              "input": [],
+              "tableName": "criminals",
+              "database": "mdb"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

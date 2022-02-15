@@ -81,6 +81,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
     String[] hostnamesByWorkload;
     ActorRef<NodeExecutor.ExecutorMessage>[] nodeExecutorsByWorkload;
     private ActorRef<QueryMessage>[] queryActorRefsByWorkload;
+    long startTime;
 
 
 
@@ -93,6 +94,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
         this.actorPath = actorPath;
         this.queryID = id;
         this.iqr = iqr;
+        this.startTime = System.currentTimeMillis();
 
         try {
             processIqr(iqr, registeredNodeExecutors);
@@ -224,7 +226,9 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
                 // check output to see what to do with the query - in example either save to file or save as view (which changes the statement slightly)
                 switch (output.get("type").asText()){
                     case "file":
+                        long beforeStatement = System.currentTimeMillis();
                         ResultSet rs = statement.executeQuery(updatedSqlString);
+
                         String path = output.get("path").asText();
                         FileWriter fileWriter = new FileWriter(new File(path));
                         BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
@@ -242,7 +246,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
                             }
                             columnTypes[i]=output.get("columnTypes").get(i).asText();
                         }
-
+                        long afterStatementBeforeIterator = System.currentTimeMillis();
                         while (rs.next()){
                             for (int i = 0; i < numColumns; i++) {
                                 bufferedWriter.write(getColumnFromResultSet(i, columnTypes, rs));
@@ -252,8 +256,18 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
                                     bufferedWriter.newLine();
                             }
                         }
+                        long afterQueryExecution = System.currentTimeMillis();
                         bufferedWriter.flush();
                         bufferedWriter.close();
+                        final BufferedWriter bw = new BufferedWriter(new FileWriter(new File("/overhead")));
+                        long overhead0 = beforeStatement-startTime;
+                        long overhead1 = afterStatementBeforeIterator-startTime;
+                        long overhead2 = afterQueryExecution-startTime;
+                        bw.write("starttime - beforeStatement: " + overhead0 + "\n" +
+                                "starttime - afterstatementBeforeIterator: "+ overhead1 +"\n" +
+                                "starttime - afterQueryExecution: " +overhead2);
+                        bw.flush();
+                        bw.close();
                         break;
                     case "view":
                         String viewName = localExecutionPlan.get("output").get("name").asText();
