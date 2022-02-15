@@ -1,19 +1,17 @@
-package agora.execution;
+package com.agora.joscha.execution;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
 import akka.actor.typed.receptionist.Receptionist;
-import akka.cluster.typed.Cluster;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import scala.collection.Iterator;
 import scala.collection.immutable.Set;
 
 import java.util.TreeSet;
 
-import static agora.execution.NodeExecutor.localExecutorServiceKey;
+import static com.agora.joscha.execution.NodeExecutor.localExecutorServiceKey;
 
 /**
  * Global Optimizer

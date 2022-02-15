@@ -1,8 +1,8 @@
-package agora.execution;
+package com.agora.joscha.execution;
 
-import agora.JsonSerializable;
-import agora.iqr.RelFactory;
-import agora.iqr.TestSchema;
+import com.agora.joscha.iqr.RelFactory;
+import com.agora.joscha.iqr.TestSchema;
+import com.agora.joscha.JsonSerializable;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;

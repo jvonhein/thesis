@@ -1,4 +1,4 @@
-package agora.iqr;
+package com.agora.joscha.iqr;
 
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;

@@ -1,4 +1,4 @@
-package agora.execution;
+package com.agora.joscha.execution;
 
 import akka.actor.typed.ActorSystem;
 import akka.actor.typed.Behavior;
@@ -11,7 +11,7 @@ import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EMStart {
+public class EMRunner {
     public static void main(String[] args){
         String pathToIqr = "/Users/joschavonhein/Workspace/thesis/project/src/main/resources/Vaccine-Crime-Plan1.json";
         if(args.length == 1){

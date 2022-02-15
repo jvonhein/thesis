@@ -1,6 +1,6 @@
-package agora.execution;
+package com.agora.joscha.execution;
 
-import agora.JsonSerializable;
+import com.agora.joscha.JsonSerializable;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -11,7 +11,6 @@ import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import scala.collection.immutable.Set;
 
 import java.sql.Connection;

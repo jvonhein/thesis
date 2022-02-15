@@ -1,4 +1,4 @@
-package agora.iqr;
+package com.agora.joscha.iqr;
 
 import org.apache.calcite.DataContext;
 import org.apache.calcite.linq4j.Enumerable;

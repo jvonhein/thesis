@@ -1,4 +1,4 @@
-package agora.iqr;
+package com.agora.joscha.iqr;
 
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelNode;
@@ -16,7 +16,6 @@ import org.apache.calcite.tools.RelBuilder;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.io.IOException;
 
 public class TranslationTest {
 

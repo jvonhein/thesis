@@ -1,14 +1,14 @@
-package agora.execution;
+package com.agora.joscha.execution;
 
 import java.sql.*;
 
-public class App {
+public class JdbcTest {
     private final String url = "jdbc:postgresql://postgres:5432/db1";
     private final String user = "odbc_user";
     private final String password = "password";
 
     public static void main(String[] args){
-        App app = new App();
+        JdbcTest app = new JdbcTest();
         app.selectHealthTest();
     }
 

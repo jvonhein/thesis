@@ -1,4 +1,4 @@
-package agora.execution;
+package com.agora.joscha.execution;
 
 import akka.actor.typed.ActorSystem;
 import akka.actor.typed.Behavior;
@@ -6,17 +6,14 @@ import akka.actor.typed.javadsl.Behaviors;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
 
-public class NEStart {
+public class Main {
 
     public static void main(String[] args) {
 
         if (args.length == 0) {
-
             // in docker environment
             if (System.getenv("CLUSTER_PORT")!=null){
                 Config config = ConfigFactory.load();

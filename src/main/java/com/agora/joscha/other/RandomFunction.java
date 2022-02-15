@@ -1,4 +1,4 @@
-package other;
+package com.agora.joscha.other;
 
 import java.util.function.Function;
 

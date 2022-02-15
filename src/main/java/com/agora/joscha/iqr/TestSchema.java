@@ -1,4 +1,4 @@
-package agora.iqr;
+package com.agora.joscha.iqr;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -8,7 +8,6 @@ import org.apache.calcite.schema.impl.AbstractSchema;
 import org.apache.calcite.sql.type.SqlTypeName;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 public class TestSchema extends AbstractSchema {

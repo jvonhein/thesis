@@ -1,4 +1,4 @@
-package other;
+package com.agora.joscha.other;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

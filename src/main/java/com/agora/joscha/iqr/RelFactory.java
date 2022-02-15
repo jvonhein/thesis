@@ -1,4 +1,4 @@
-package agora.iqr;
+package com.agora.joscha.iqr;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
