@@ -1,5 +1,8 @@
-package com.agora.joscha.iqr;
+package com.agora.joscha.old;
 
+import com.agora.joscha.iqr.RelFactory;
+import com.agora.joscha.iqr.TestSchema;
+import com.agora.joscha.iqr.TestTable;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.JoinRelType;
@@ -83,25 +86,6 @@ public class TranslationTest {
         System.out.println(rs3.asStatement().toString());
     }
 
-
-    private static void oldExamples(){
-        final HrClusteredSchema schema = new HrClusteredSchema();
-        //Class.forName("org.apache.calcite.jdbc.Driver");
-        //final Properties info = new Properties();
-        SchemaPlus rootSchema = Frameworks.createRootSchema(true).add("hr", schema);
-
-        final Frameworks.ConfigBuilder configBuilder = Frameworks.newConfigBuilder();
-
-        final FrameworkConfig config = configBuilder
-                .defaultSchema(rootSchema)
-                .build();
-
-        final RelBuilder builder = RelBuilder.create(config);
-
-
-        // example0(builder);
-        example1(builder);
-    }
 
     private static void example0(RelBuilder builder){
         final RelNode node = builder.scan("emps")

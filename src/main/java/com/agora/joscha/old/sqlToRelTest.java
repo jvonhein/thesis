@@ -1,5 +1,7 @@
-package com.agora.joscha.iqr;
+package com.agora.joscha.old;
 
+import com.agora.joscha.iqr.TestSchema;
+import com.agora.joscha.iqr.TestTable;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataTypeFactory;

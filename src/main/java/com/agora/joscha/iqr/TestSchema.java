@@ -121,7 +121,7 @@ public class TestSchema extends AbstractSchema {
     }
 
     @Override
-    protected Map<String, Table> getTableMap() {
+    public Map<String, Table> getTableMap() {
         return tableMap;
     }
 }
