@@ -81,6 +81,8 @@ public class ExecutionManager extends AbstractBehavior<ExecutionManager.Query> {
                 this.registeredNodeExecutors.add(actorRef);
                 if (actorRef.path().toString().equals(nodeExecutorActorPath)) {
                     actorRef.tell(new NodeExecutor.AgoraQuery(iqr, null, actorRef.path().toString()));
+                    getContext().getLog().info("\n\n\nExecution plan representation sent to NodeExecutor {}\n\n\n", nodeExecutorActorPath);
+                    return Behaviors.stopped();
                 }
                 getContext().getLog().info("\n\n\nnew listing received. all current registered nodeExecutors: {}", this.registeredNodeExecutors);
                 context.getLog().info("\n\n");

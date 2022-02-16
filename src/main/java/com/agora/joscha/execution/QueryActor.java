@@ -270,7 +270,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
                         bw.close();
                         break;
                     case "view":
-                        String viewName = localExecutionPlan.get("output").get("name").asText();
+                        String viewName = output.get("name").asText();
                         updatedSqlString = "CREATE VIEW "+viewName+" AS "+updatedSqlString;
                         statement.executeQuery(updatedSqlString);
                 }
@@ -367,7 +367,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
 
                         break;
                     case POSTGRES:
-                        sqlStatement = "IMPORT FOREIGN SCHEMA test FROM SERVER "+hostname+ "INTO PUBLIC OPTIONS (" +
+                        sqlStatement = "IMPORT FOREIGN SCHEMA test FROM SERVER "+hostname+ " INTO PUBLIC OPTIONS (" +
                                 "odbc_DATABASE '" + database + "', table '"+localNewName+"', sql_query 'select * from "+remoteViewName+"' );";
 
                 }

@@ -1,8 +1,10 @@
 CREATE EXTENSION odbc_fdw;
 CREATE SERVER mdb_criminals FOREIGN DATA WRAPPER odbc_fdw OPTIONS (dsn 'mdb_criminals');
-CREATE USER MAPPING FOR postgres SERVER mdb_criminals OPTIONS (odbc_UID 'root', odbc_PWD '');
 CREATE SERVER mdb_crime FOREIGN DATA WRAPPER odbc_fdw OPTIONS (dsn 'mdb_crime');
-CREATE USER MAPPING FOR postgres SERVER mdb_crime OPTIONS (odbc_UID 'root', odbc_PWD '');
+CREATE ROLE odbc_user SUPERUSER LOGIN PASSWORD 'password';
+GRANT ALL PRIVILEGES ON DATABASE db1 TO odbc_user;
+CREATE USER MAPPING FOR odbc_user SERVER mdb_criminals OPTIONS (odbc_UID 'root', odbc_PWD '');
+CREATE USER MAPPING FOR odbc_user SERVER mdb_crime OPTIONS (odbc_UID 'root', odbc_PWD '');
 
 CREATE TABLE country_stats (
 bundesland VARCHAR(255),
@@ -16,7 +18,13 @@ FROM '/tables/country_stats.csv'
 DELIMITER ';'
 CSV HEADER;
 
-CREATE ROLE odbc_user SUPERUSER LOGIN PASSWORD 'password';
-GRANT ALL PRIVILEGES ON DATABASE db1 TO odbc_user;
+CREATE TABLE vaccine_data (
+batch_number VARCHAR(255) PRIMARY KEY,
+shot_number INTEGER,
+date DATE,
+dummy_data VARCHAR(255),
+bundesland VARCHAR(255)
+);
+
 
 

@@ -32,7 +32,7 @@ RUN    echo '[mysqld]\nskip-host-cache\nskip-name-resolve' > /etc/mysql/conf.d/d
 RUN wget https://jira.mariadb.org/secure/attachment/44179/JavaWrappers.jar -O /usr/lib/mysql/plugin/JavaWrappers.jar
 COPY ./lib/* /tmp/
 COPY ./connect.cnf /etc/mysql/mariadb.conf.d/connect.cnf
-COPY ./tables/crime.csv /tmp/criminals.csv
+COPY ./tables/crime.csv /tmp/crime.csv
 
 RUN chmod 0444 /etc/mysql/mariadb.conf.d/connect.cnf
 COPY init_crime.sql /docker-entrypoint-initdb.d/
