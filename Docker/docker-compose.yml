@@ -72,7 +72,7 @@ services:
           CLUSTER_PORT: 1601
           CLUSTER_IP: ne2
           SEED_PORT_1600_TCP_ADDR: ne1
-          JDBC_URL: "jdbc:mariadb://mdb1:3006/mdb"
+          JDBC_URL: "jdbc:mariadb://mdb_crime:3306/mdb"
           JDBC_USER: mariadb
           JDBC_PW: 123456
           EEHOSTNAME: mdb_crime
@@ -89,7 +89,7 @@ services:
           CLUSTER_PORT: 1602
           CLUSTER_IP: ne3
           SEED_PORT_1600_TCP_ADDR: ne1
-          JDBC_URL: "jdbc:mariadb://mdb1:3006/mdb"
+          JDBC_URL: "jdbc:mariadb://mdb_criminals:3306/mdb"
           JDBC_USER: mariadb
           JDBC_PW: 123456
           EEHOSTNAME: mdb_criminals
