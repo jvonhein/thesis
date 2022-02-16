@@ -106,7 +106,7 @@ public class NodeExecutor extends AbstractBehavior<NodeExecutor.ExecutorMessage>
             JsonNode node = msg.iqr;
             int id = node.get("id").asInt();
 
-            Connection conn = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
+            Connection conn = jdbcUrl.equals("testurl") ? null: DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPw);
             // Connection conn = null;
             String name = "query_"+id;
             if(!currentQueries.containsKey(id))

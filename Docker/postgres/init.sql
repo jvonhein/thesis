@@ -5,6 +5,8 @@ CREATE ROLE odbc_user SUPERUSER LOGIN PASSWORD 'password';
 GRANT ALL PRIVILEGES ON DATABASE db1 TO odbc_user;
 CREATE USER MAPPING FOR odbc_user SERVER mdb_criminals OPTIONS (odbc_UID 'root', odbc_PWD '');
 CREATE USER MAPPING FOR odbc_user SERVER mdb_crime OPTIONS (odbc_UID 'root', odbc_PWD '');
+CREATE USER MAPPING FOR postgres SERVER mdb_criminals OPTIONS (odbc_UID 'root', odbc_PWD '');
+CREATE USER MAPPING FOR postgres SERVER mdb_crime OPTIONS (odbc_UID 'root', odbc_PWD '');
 
 CREATE TABLE country_stats (
 bundesland VARCHAR(255),

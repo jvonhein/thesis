@@ -259,7 +259,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
                         long afterQueryExecution = System.currentTimeMillis();
                         bufferedWriter.flush();
                         bufferedWriter.close();
-                        final BufferedWriter bw = new BufferedWriter(new FileWriter(new File("/overhead")));
+                        final BufferedWriter bw = new BufferedWriter(new FileWriter(new File("/overhead.txt")));
                         long overhead0 = beforeStatement-startTime;
                         long overhead1 = afterStatementBeforeIterator-startTime;
                         long overhead2 = afterQueryExecution-startTime;
@@ -313,11 +313,13 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
         }
         // job finished -> shut down
         if (unfinishedLocalExecutionPlans==0){
-//            try {
-//                conn.close();
-//            } catch (SQLException e) {
-//                e.printStackTrace();
-//            }
+            if (conn!=null){
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
             return Behaviors.stopped();
         }
 
@@ -325,6 +327,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
     }
 
     private String getColumnFromResultSet(int i, String[] columnTypes, ResultSet rs) throws SQLException {
+        i+=1; //this is necessary since ResultSet indices start from 1....
         String result = "";
         switch (columnTypes[i]){
             case "VARCHAR": result = rs.getString(i);
@@ -372,12 +375,11 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
 
                 }
 
+                getContext().getLog().info("\n\n\nSQL-Preparation-Statement: {}\n\n\n", sqlStatement);
                 try {
-                    if (conn==null){
-                        getContext().getLog().info("\n\n\nSQL-Preparation-Statement: {}\n\n\n", sqlStatement);
-                    } else {
+                    if (conn!=null) {
                         final Statement statement = conn.createStatement();
-                        statement.executeQuery(sqlStatement);
+                        statement.execute(sqlStatement);
                     }
                 } catch (SQLException e) {
                     e.printStackTrace();
