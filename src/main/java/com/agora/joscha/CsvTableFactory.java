@@ -85,7 +85,7 @@ public class CsvTableFactory
         FileWriter fileWriter = new FileWriter(file);
         BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
         // header
-        bufferedWriter.write("land;population_total;vaccinated_firstshot;vaccinated_secondshot;percent_vaccinated_firstshot;percent_vaccinated_secondshot\n");
+        bufferedWriter.write("case-number;bundesland;category;date;criminal-id;victim-id;details\n");
 
         for (int i = 0; i < numCrimes; i++) {
             int caseNumber = i;
