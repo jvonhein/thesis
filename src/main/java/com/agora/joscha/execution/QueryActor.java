@@ -76,6 +76,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
     private int workloadId = -1;
     private JsonNode workload;
     private final int queryID;
+    private boolean logColumns = true;
 
     ArrayList<Requirement>[] requirements;
     String[] hostnamesByWorkload;
@@ -216,8 +217,6 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
                     updatedSqlString += split + " AS " + outColNames.path(i).asText() +"\nFROM" + splits[i+1]+";"; // end statement with semicolon
             }
 
-
-            // getContext().getLog().info("\n\n\nold Query:\n" + sqlString + "\n\n\n");
             getContext().getLog().info("\n\n\nnew Query:\n" + updatedSqlString + "\n\n\n");
 
             if (conn!=null){
@@ -308,6 +307,7 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
             requirements[i].removeIf(requirement -> (requirement.workloadId==msg.workloadId) && (requirement.localExecutionPlanIndex==msg.localExecutionPlanIndex));
             if (requirements[i].isEmpty()){
                 executePlan(workload.get("local-execution-plan").get(i));
+                getContext().getLog().info("local execution plan {} sucessfully executed!", i);
                 unfinishedLocalExecutionPlans -=1;
             }
         }
@@ -327,16 +327,21 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
     }
 
     private String getColumnFromResultSet(int i, String[] columnTypes, ResultSet rs) throws SQLException {
-        i+=1; //this is necessary since ResultSet indices start from 1....
+        if (logColumns){
+            getContext().getLog().info("trying to write column[{}] of type {}", i, columnTypes[i]);
+            if(i==4)
+                logColumns=false;
+        }
+
         String result = "";
         switch (columnTypes[i]){
-            case "VARCHAR": result = rs.getString(i);
+            case "VARCHAR": result = rs.getString(i+1);
                 break;
-            case "INTEGER": result = ""+rs.getInt(i);
+            case "INTEGER": result = ""+rs.getInt(i+1);
                 break;
-            case "DOUBLE": result = ""+rs.getDouble(i);
+            case "DOUBLE": result = ""+rs.getDouble(i+1);
                 break;
-            case "DATE": result = rs.getDate(i).toString();
+            case "DATE": result = rs.getDate(i+1).toString();
                 break;
             default:break;
         }
@@ -364,7 +369,8 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
                         if (remoteEngine.equals("mariadb")){
                             sqlStatement = "CREATE TABLE "+localNewName+" ENGINE=CONNECT DEFAULT CHARSET=utf8mb4 CONNECTION='mysql://mariadb:123456@"+hostname+"/"+database+"/"+remoteViewName+"' TABLE_TYPE=MYSQL;";
                         } else if (remoteEngine.equals("postgres")){
-                            sqlStatement = "CREATE TABLE "+localNewName+" engine=connect table_type=ODBC block_size=10 tabname='"+remoteViewName+"' CONNECTION='DRIVER={PostgreSQL Unicode};" +
+                            sqlStatement = "CREATE TABLE "+localNewName+" engine=connect table_type=ODBC block_size=10 " +
+                                    "tabname='"+remoteViewName+"' CONNECTION='DRIVER={PostgreSQL Unicode};" +
                                     "Server="+hostname+";UID=odbc_user;PWD=password;Database="+database+"';";
                         }
 

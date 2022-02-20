@@ -1,0 +1,227 @@
+{
+  "id": 7,
+  "name": "dataflow-job",
+  "workload": [
+    {
+      "id": 0,
+      "location": "Berlin",
+      "execution-engine": "Flink",
+      "actorRef": "akka://sys@hostA:2552/user/flink",
+      "local-execution-plan": [
+        {
+          "id": 0,
+          "iterative": "false",
+          "start-condition": {
+            "requirements": [
+              {
+                "type": "remote execution finished",
+                "message": {
+                  "status": "success",
+                  "workload-id": 1,
+                  "local-execution-plan-index": 0
+                }
+              }
+            ]
+          },
+          "failure-strategy": "none",
+          "input": [
+            {
+              "id": 0,
+              "continous": "false",
+              "direction": "pull",
+              "type": "direct"
+            }
+          ],
+          "output": [
+            {
+              "type": "file",
+              "path": "/path/to/output.csv"
+            }
+          ],
+          "operators": [
+            {
+              "type": "FileSinkOperator",
+              "ClassName": "CustomSinkOperator",
+              "jarFile": "flink-jars.jar"
+            },
+            {
+              "type": "ReduceOperator",
+              "resultDataType": {
+                "Tuple2": [
+                  "String",
+                  "Integer"
+                ]
+              },
+              "ClassName": "CustomReduceOperator0",
+              "jarFile": "flink-jars.jar"
+            },
+            {
+              "type": "GroupByOperator",
+              "resultDataType": {
+                "Tuple2": [
+                  "String",
+                  "Integer"
+                ],
+                "group": {
+                  "type": "field",
+                  "fieldOrdinal": 0
+                }
+              },
+              "groupBy": {
+                "type": "field",
+                "fieldOrdinal": 0
+              }
+            },
+            {
+              "type": "MapOperator",
+              "resultDataType": {
+                "Tuple2": [
+                  "String",
+                  "Integer"
+                ]
+              },
+              "ClassName": "CustomMapOperator0",
+              "jarFile": "flink-jars.jar"
+            },
+            {
+              "type": "ScanTableSource",
+              "resultDataType": {
+                "Tuple7": [
+                  "Integer",
+                  "String",
+                  "String",
+                  "Date",
+                  "Integer",
+                  "Integer",
+                  "String"
+                ]
+              },
+              "ClassName": "CustomMariaDBCrimeSource",
+              "jarFile": "flink-jars.jar"
+            }
+          ],
+          "jar-file-location": "userX@AgoraStore:/jars/Plan/5/flink-jars.jar"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "location": "Frankfurt",
+      "execution-engine": "MariaDB",
+      "actorRef": "akka://sys@hostB:2552/user/MariaDB",
+      "local-execution-plan": [
+        {
+          "__description__": "db filters a table, so only part of the data has to be transferred to flink. No output, because the db only saves the data as view",
+          "id": 0,
+          "iterative": "false",
+          "start-condition": {
+            "requirements": []
+          },
+          "failure-strategy": "none",
+          "on-success": {
+            "message": {
+              "to": 0,
+              "status": "success",
+              "content":  [
+                "workload-id",
+                "local-execution-plan-index"
+              ]
+            }
+          },
+          "output": [
+            {
+              "type": "view",
+              "name": "temp_view_7_1_0",
+              "columnNames": [
+                "case-number",
+                "bundesland",
+                "category",
+                "date",
+                "criminal-id",
+                "victim-id",
+                "details"
+              ]
+            }
+          ],
+          "operators": [
+            {
+              "id": 0,
+              "type": "filter",
+              "rowcount": 100000,
+              "cumulative-cost": 2000,
+              "ordering": "asc",
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "NUMERIC",
+                "VARCHAR",
+                "VARCHAR",
+                "DATE",
+                "NUMERIC",
+                "NUMERIC",
+                "VARCHAR"
+              ],
+              "input": [
+                1
+              ],
+              "predicates": [
+                {
+                  "operator": "GREATER_THAN",
+                  "operands": [
+                    {
+                      "type": "field",
+                      "fieldOrdinal": 3
+                    },
+                    {
+                      "type": "literal",
+                      "dataType": "String",
+                      "value": "2021-07-00"
+                    }
+                  ]
+                },
+                {
+                  "operator": "EQUALS",
+                  "operands": [
+                    {
+                      "type": "field",
+                      "fieldOrdinal": 2
+                    },
+                    {
+                      "type": "literal",
+                      "dataType": "String",
+                      "value": "assault"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": 1,
+              "type": "tablescan",
+              "rowcount": 250000,
+              "cumulative-cost": 1500,
+              "ordering": [
+                "asc"
+              ],
+              "orderIndices": [
+                0
+              ],
+              "inColumnTypes": [
+                "NUMERIC",
+                "VARCHAR",
+                "VARCHAR",
+                "DATE",
+                "NUMERIC",
+                "NUMERIC",
+                "VARCHAR"
+              ],
+              "input": [],
+              "tableName": "crime"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

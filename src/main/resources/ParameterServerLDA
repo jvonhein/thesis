@@ -1,0 +1,270 @@
+{
+  "name": "ParameterServerLDA",
+  "id": 42,
+  "workload": [
+    {
+      "id": 0,
+      "location": "Berlin",
+      "execution-engine": "jdk-16",
+      "executor-actorRef": "akka://sys@jdk-16-server-0:2552/user/distributedMLExecutor",
+      "local-execution-plan": [
+        {
+          "id": 0,
+          "iterative": "false",
+          "start-condition": {
+            "requirements": []
+          },
+          "failure-strategy": "none",
+          "input": [
+            {
+              "id": 0,
+              "continuous": "true",
+              "direction": "push",
+              "type": "socket",
+              "socket": {
+                "protocol": "tcp",
+                "hostname": "jdk-16-server-0",
+                "port": 6001,
+                "allowed-connections": [1, 2]
+              },
+              "description": "state change of client-nodes"
+            }
+          ],
+          "output": [
+            {
+              "id": 0,
+              "continuous": "true",
+              "direction": "pull",
+              "type": "http",
+              "http-server": {
+                "hostname": "jdk-16-server-0",
+                "port": 7001,
+                "url": "/params/$topic/$word",
+                "method": "GET",
+                "allowed-connections": [1, 2]
+              }
+            },
+            {
+              "id": 1,
+              "continuous": "true",
+              "direction": "pull",
+              "type": "http",
+              "http-server": {
+                "hostname": "jdk-16-server-0",
+                "url": "/params/$topic/",
+                "method": "GET",
+                "allowed-connections": [1, 2]
+              }
+            }
+          ],
+          "on-success": [
+            {
+              "message": {
+                "to": 1,
+                "status": "success",
+                "content": [
+                  "workload-id",
+                  "local-execution-plan-index"
+                  ]
+              }
+            },
+            {
+              "message": {
+                "to": 2,
+                "status": "success",
+                "content": [
+                  "workload-id",
+                  "local-execution-plan-index"
+                  ]
+              }
+            }
+            ],
+          "operators":[
+            {
+              "type": "java-executable",
+              "executable-location": "https://agoraml.com/executables/parameter-server_server.1.3.jar",
+              "parameters": ["--in-port", "6001", "--out-port", "7001" , "--accuracy", "0.99"],
+              "description": "server part of the parameter-server"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "location": "Berlin",
+      "execution-engine": "jdk-16",
+      "executor-actorRef": "akka://sys@jdk-16-client-0:2552/user/distributedMLExecutor",
+      "local-execution-plan": [
+        {
+          "id": 0,
+          "iterative": "false",
+          "start-condition": {
+            "requirements": []
+          },
+          "failure-strategy": "restart",
+          "input": [
+            {
+              "id": 0,
+              "continuous": "true",
+              "direction": "pull",
+              "type": "http",
+              "http-server": {
+                "hostname": "jdk-16-server-0",
+                "port": 7001,
+                "url": "/params/$topic/$word",
+                "method": "GET",
+                "allowed-connections": [1, 2]
+              }
+            },
+            {
+              "id": 1,
+              "continuous": "true",
+              "direction": "pull",
+              "type": "http",
+              "workload-id": 0,
+              "local-execution-plan-index": 0,
+              "http-server": {
+                "hostname": "jdk-16-server-0",
+                "port": 7001,
+                "url": "/params/$topic",
+                "method": "GET"
+              }
+            }
+          ],
+          "output": [
+            {
+              "id": 0,
+              "continuous": "true",
+              "direction": "push",
+              "type": "socket",
+              "workload-id": 0,
+              "local-execution-plan-index": 0,
+              "socket": {
+                "protocol": "tcp",
+                "hostname": "jdk-16-server-0",
+                "port": 6001
+              },
+              "description": "state change of client-nodes"
+            },
+            {
+              "id": 1,
+              "type": "file",
+              "path": "/data/enriched-documents"
+            }
+          ],
+          "stop-condition": {
+            "message": {
+              "from": 0,
+              "status": "success",
+              "content": {
+                "workload-id": 0,
+                "local-execution-index": 0
+              }
+            }
+          },
+          "operators":[
+            {
+              "type": "java-executable",
+              "executable-location": "https://agoraml.com/executables/parameter-server_client.1.3.jar",
+              "parameters": [
+                "--data-path", "/data/documents",
+                "--server-in-port", "6001",
+                "--server-out-port", "7001",
+                "--server-hostname", "jdk-16-server-0"],
+              "description": "client part of the parameter-server."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "location": "Frankfurt",
+      "execution-engine": "jdk-16",
+      "executor-actorRef": "akka://sys@jdk-16-client-1:2552/user/distributedMLExecutor",
+      "local-execution-plan": [
+        {
+          "id": 0,
+          "iterative": "false",
+          "start-condition": {
+            "requirements": []
+          },
+          "failure-strategy": "restart",
+          "input": [
+            {
+              "id": 0,
+              "continuous": "true",
+              "direction": "pull",
+              "type": "http",
+              "http-server": {
+                "hostname": "jdk-16-server-0",
+                "port": 7001,
+                "url": "/params/$topic/$word",
+                "method": "GET",
+                "allowed-connections": [1, 2]
+              }
+            },
+            {
+              "id": 1,
+              "continuous": "true",
+              "direction": "pull",
+              "type": "http",
+              "workload-id": 0,
+              "local-execution-plan-index": 0,
+              "http-server": {
+                "hostname": "jdk-16-server-0",
+                "port": 7001,
+                "url": "/params/$topic",
+                "method": "GET"
+              }
+            }
+          ],
+          "output": [
+            {
+              "id": 0,
+              "continuous": "true",
+              "direction": "push",
+              "type": "socket",
+              "workload-id": 0,
+              "local-execution-plan-index": 0,
+              "socket": {
+                "protocol": "tcp",
+                "hostname": "jdk-16-server-0",
+                "port": 6001
+              },
+              "description": "state change of client-nodes"
+            },
+            {
+              "id": 1,
+              "type": "file",
+              "path": "/data/enriched-documents"
+            }
+          ],
+          "stop-condition": {
+            "message": {
+              "from": 0,
+              "status": "success",
+              "content": {
+                "workload-id": 0,
+                "local-execution-index": 0
+              }
+            }
+          },
+          "operators":[
+            {
+              "type": "java-executable",
+              "executable-location": "https://agoraml.com/executables/parameter-server_client.1.3.jar",
+              "parameters": [
+                "--data-path", "/data/documents",
+                "--server-in-port", "6001",
+                "--server-out-port", "7001",
+                "--server-hostname", "jdk-16-server-0"],
+              "description": "client part of the parameter-server."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
