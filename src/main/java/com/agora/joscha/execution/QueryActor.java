@@ -267,11 +267,17 @@ public class QueryActor extends AbstractBehavior<QueryActor.QueryMessage> {
                                 "starttime - afterQueryExecution: " +overhead2);
                         bw.flush();
                         bw.close();
+                        getContext().getLog().info("\n\n\nExecution Plan succesfully completed!\n\n\n");
                         break;
                     case "view":
                         String viewName = output.get("name").asText();
                         updatedSqlString = "CREATE VIEW "+viewName+" AS "+updatedSqlString;
+                        final BufferedWriter bw1 = new BufferedWriter(new FileWriter(new File("/overhead.txt")));
+                        long before = System.currentTimeMillis();
                         statement.executeQuery(updatedSqlString);
+                        bw1.write("before executeQuery: "+ (System.currentTimeMillis()-before));
+                        bw1.flush();
+                        bw1.close();
                 }
             }
 
