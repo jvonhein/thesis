@@ -14,21 +14,6 @@ RUN    find /etc/mysql/ -name '*.cnf' -print0 \
 # don't reverse lookup hostnames, they are usually another container
 RUN    echo '[mysqld]\nskip-host-cache\nskip-name-resolve' > /etc/mysql/conf.d/docker.cnf
 
-
-#RUN apt-get update && apt-get install software-properties-common mariadb-plugin-connect -y
-#RUN curl -O https://downloads.cloudera.com/connectors/hive_odbc_2.6.1.1001/Linux/ClouderaHiveODBC-2.6.1.1001-1.x86_64.rpm
-#RUN alien -i ClouderaHiveODBC-2.6.1.1001-1.x86_64.rpm
-#COPY config/hive.ini /
-#RUN cat hive.ini >> /etc/odbcinst.ini
-
-#https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-common/2.7.7/hadoop-common-2.7.7.jar
-#https://repo1.maven.org/maven2/org/apache/hive/hive-jdbc/2.3.8/hive-jdbc-2.3.8-standalone.jar
-#https://repo.hortonworks.com/content/repositories/releases/org/apache/hive/hive-jdbc/2.3.8/hive-jdbc-2.3.8.jar
-#https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-auth/2.7.7/hadoop-auth-2.7.7.jar
-#https://downloads.cloudera.com/connectors/ClouderaHiveJDBC-2.6.13.1016.zip
-
-
-#COPY ./jars/* /usr/lib/mysql/plugin/
 RUN wget https://jira.mariadb.org/secure/attachment/44179/JavaWrappers.jar -O /usr/lib/mysql/plugin/JavaWrappers.jar
 COPY ./lib/* /tmp/
 COPY ./connect.cnf /etc/mysql/mariadb.conf.d/connect.cnf
@@ -38,8 +23,6 @@ RUN chmod 0444 /etc/mysql/mariadb.conf.d/connect.cnf
 COPY init.sql /docker-entrypoint-initdb.d/
 
 COPY ./my.cnf /etc/mysql/mariadb.conf.d/
-
-COPY import/* /import/
 
 VOLUME /var/lib/mysql
 

@@ -58,11 +58,6 @@ RUN echo "listen_addresses='*'" >> /etc/postgresql/12/main/postgresql.conf
 
 EXPOSE 5432
 
-#COPY import/create_tpch.sql /create_tpch.sql
-#COPY import/index_tpch.sql /index_tpch.sql
-#COPY import/import_tpch.sh /import_tpch.sh
-#COPY import/create_indexes.sh /create_indexes.sh
-
 VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"] 
 
 CMD ["/usr/lib/postgresql/12/bin/postgres", "-D", "/var/lib/postgresql/12/main", "-c", "config_file=/etc/postgresql/12/main/postgresql.conf"]
