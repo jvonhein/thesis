@@ -18,6 +18,7 @@ public class CsvTableFactory
         int numCrimes = 100000;
         int numCriminals = 70000;
         String folder = "/data/Joscha/tables/";
+        // String folder = "src/main/resources/tables/";
 
         TreeMap<Integer, Land> landProbability = new TreeMap<>();
         landProbability.put(17925570, Land.NORD_RHEIN_WESTFALEN);
@@ -69,6 +70,9 @@ public class CsvTableFactory
                 bufferedWriter.write("batch"+caseNumber+";"+shotnumber+";"+formattedDate+";"+details+";"+land+"\n");
             }
 
+            bufferedWriter.flush();
+            bufferedWriter.close();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -95,11 +99,14 @@ public class CsvTableFactory
             Instant instance = java.time.Instant.ofEpochMilli(dateAsLong);
             final LocalDateTime localDateTime = LocalDateTime.ofInstant(instance, ZoneId.systemDefault());
             final String formattedDate = localDateTime.format(formatter);
-            int criminalId = RANDOM.nextInt(80000);
-            int victimId = RANDOM.nextInt(200000);
+            int criminalId = RANDOM.nextInt(numCriminals);
+            int victimId = RANDOM.nextInt(numCrimes);
             String details = "Lirum Larium Ipsum";
             bufferedWriter.write(caseNumber+";"+land+";"+category+";"+formattedDate+";"+criminalId+";"+victimId+";"+details+"\n");
         }
+
+        bufferedWriter.flush();
+        bufferedWriter.close();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -126,6 +133,9 @@ public class CsvTableFactory
 
                 bufferedWriter.write(id+";"+gender+";"+age+";"+adress+";"+vaccineStatus+";"+details+"\n");
             }
+
+            bufferedWriter.flush();
+            bufferedWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
