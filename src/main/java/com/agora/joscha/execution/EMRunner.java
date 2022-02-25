@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class EMRunner {
     public static void main(String[] args){
-        String pathToIqr = "/Users/joschavonhein/Workspace/thesis/project/src/main/resources/Vaccine-Crime-Plan1.json";
+        String pathToIqr = "/Users/joschavonhein/Workspace/thesis/project/src/main/resources/Vaccine-Crime-Plan-localhost.json";
         if(args.length == 1){
             pathToIqr=args[0];
         }

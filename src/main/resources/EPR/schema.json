@@ -1,0 +1,668 @@
+{
+  "$schema": "http://json-schema.org/agora/epr/schema#",
+  "title": "Execution Plan Represenation",
+  "description": "Complete representation of a cross-plattform geo-distributed execution plan",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "id": {
+      "type": "number"
+    },
+    "workload": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "location": {
+            "type": "string"
+          },
+          "execution-engine": {
+            "type": "string"
+          },
+          "executor-actorRef": {
+            "type": "string"
+          },
+          "local-execution-plan": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "number"
+                },
+                "iterative": {
+                  "type": "boolean"
+                },
+                "start-condition": {
+                  "type": "object",
+                  "properties": {
+                    "requirements": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "object",
+                            "properties": {
+                              "status": {
+                                "type": "string"
+                              },
+                              "workload-id": {
+                                "type": "number"
+                              },
+                              "local-execution-plan-index": {
+                                "type": "number"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "failure-strategy": {
+                  "type": "string"
+                },
+                "input": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "continuous": {
+                      "type": "string"
+                    },
+                    "direction": {
+                      "type": "string"
+                    },
+                    "remote-execution-engine": {
+                      "type": "string"
+                    },
+                    "workload-id": {
+                      "type": "number"
+                    },
+                    "local-execution-plan-index": {
+                      "type": "number"
+                    },
+                    "view": {
+                      "type": "object",
+                      "properties": {
+                        "remote-view-name": {
+                          "type": "string"
+                        },
+                        "local-new-name": {
+                          "type": "string"
+                        },
+                        "database": {
+                          "type": "string"
+                        },
+                        "columnTypes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1
+                        },
+                        "columnNames": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1,
+                          "uniqueItems": "true"
+                        }
+                      },
+                      "required": [
+                        "remote-view-name",
+                        "columnTypes"
+                      ]
+                    },
+                    "socket": {
+                      "type": "object",
+                      "properties": {
+                        "protocol": {
+                          "type": "string"
+                        },
+                        "hostname": {
+                          "type": "string"
+                        },
+                        "port": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "hostname",
+                        "port"
+                      ]
+                    },
+                    "http-server": {
+                      "type": "object",
+                      "properties": {
+                        "hostname": {
+                          "type": "string"
+                        },
+                        "port": {
+                          "type": "number"
+                        },
+                        "url": {
+                          "type": "string"
+                        },
+                        "method": {
+                          "type": "string"
+                        },
+                        "allowed-connections": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "hostname",
+                        "port",
+                        "url",
+                        "method"
+                      ]
+                    }
+                  }
+                },
+                "output": {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
+                          },
+                          "columnTypes": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "minItems": 1
+                          },
+                          "columnNames": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "minItems": 1,
+                            "uniqueItems": "true"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "name",
+                          "columnNames"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number"
+                          },
+                          "continuous": {
+                            "type": "string"
+                          },
+                          "direction": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "workload-id": {
+                            "type": "number"
+                          },
+                          "local-execution-plan-index": {
+                            "type": "string"
+                          },
+                          "socket": {
+                            "type": "object",
+                            "properties": {
+                              "protocol": {
+                                "type": "string"
+                              },
+                              "hostname": {
+                                "type": "string"
+                              },
+                              "port": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "hostname",
+                              "port"
+                            ]
+                          },
+                          "http-server": {
+                            "type": "object",
+                            "properties": {
+                              "hostname": {
+                                "type": "string"
+                              },
+                              "port": {
+                                "type": "number"
+                              },
+                              "url": {
+                                "type": "string"
+                              },
+                              "method": {
+                                "type": "string"
+                              },
+                              "allowed-connections": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "hostname",
+                              "port",
+                              "url",
+                              "type"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "on-success": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "object",
+                        "properties": {
+                          "to": {
+                            "type": "number"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "content": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "to",
+                          "content"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "message"
+                    ]
+                  }
+                },
+                "stop-condition": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "object",
+                        "properties": {
+                          "from": {
+                            "type": "number"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "content": {
+                            "type": "object",
+                            "properties": {
+                              "workload-id": {
+                                "type": "number"
+                              },
+                              "local-execution-plan-index": {
+                                "type": "number"
+                              }
+                            }
+                          }
+                        },
+                        "required": [
+                          "from",
+                          "content"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "message"
+                    ]
+                  }
+                },
+                "operators": {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "executable-location": {
+                            "type": "string"
+                          },
+                          "parameters": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "description": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string"
+                          },
+                          "ClassName": {
+                            "type": "string"
+                          },
+                          "jarFile": {
+                            "type": "string"
+                          },
+                          "resultDataType": {},
+                          "groupBy": {}
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "inRowCount": {
+                            "type": "number"
+                          },
+                          "cumulative-cost": {
+                            "type": "number"
+                          },
+                          "ordering": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "orderIndices": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            }
+                          },
+                          "inColumnTypes": {
+                            "type": "array",
+                            "items": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "input": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            }
+                          },
+                          "GroupingIndices": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            }
+                          },
+                          "aggCalls": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string"
+                                },
+                                "indices": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "number"
+                                  }
+                                },
+                                "distinct": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "indices"
+                              ]
+                            },
+                            "minItems": 1
+                          },
+                          "output": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "fieldOrdinal": {
+                                    "type": "number"
+                                  },
+                                  "CASE": {
+                                    "type": "object",
+                                    "properties": {
+                                      "when": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "operator": {
+                                              "type": "string"
+                                            },
+                                            "operands": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "type": {
+                                                    "type": "string"
+                                                  },
+                                                  "fieldOrdinal": {
+                                                    "type": "number"
+                                                  },
+                                                  "dataType": {
+                                                    "type": "string"
+                                                  },
+                                                  "value": {}
+                                                },
+                                                "required": [
+                                                  "type"
+                                                ]
+                                              },
+                                              "minItems": 1
+                                            }
+                                          }
+                                        },
+                                        "minItems": 1
+                                      },
+                                      "then": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "type": "string"
+                                            },
+                                            "dataType": {
+                                              "type": "string"
+                                            },
+                                            "value": {}
+                                          }
+                                        },
+                                        "minItems": 1
+                                      },
+                                      "else": {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "type": "string"
+                                            },
+                                            "dataType": {
+                                              "type": "string"
+                                            },
+                                            "value": {}
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "when",
+                                      "then"
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "minItems": 1
+                          },
+                          "jointype": {
+                            "type": "string"
+                          },
+                          "conditions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "operator": {
+                                  "type": "string"
+                                },
+                                "leftOrdinal": {
+                                  "type": "number"
+                                },
+                                "rightOrdinal": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "operator",
+                                "leftOrdinal",
+                                "rightOrdinal"
+                              ]
+                            },
+                            "minItems": 1
+                          },
+                          "predicates": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "operator": {
+                                  "type": "string"
+                                },
+                                "operands": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string"
+                                      },
+                                      "fieldOrdinal": {
+                                        "type": "number"
+                                      },
+                                      "dataType": {
+                                        "type": "string"
+                                      },
+                                      "value": {}
+                                    },
+                                    "required": [
+                                      "type"
+                                    ]
+                                  }
+                                }
+                              },
+                              "required": [
+                                "operator",
+                                "operands"
+                              ]
+                            },
+                            "minItems": 1
+                          },
+                          "tableName": {
+                            "type": "string"
+                          },
+                          "database": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "type",
+                          "input"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "jar-file-location": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "operators"
+              ]
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "id",
+          "executor-actorRef",
+          "local-execution-plan"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "name",
+    "id",
+    "workload"
+  ]
+}
